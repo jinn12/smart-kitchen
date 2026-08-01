@@ -1,0 +1,20 @@
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Gradle / Spring
+build/
+.gradle/
+application-local.yml
+
+# Flutter
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+local.properties
+key.properties
+
+# etc
+*.log
+.DS_Store
