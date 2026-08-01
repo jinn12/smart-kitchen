@@ -24,7 +24,7 @@ flowchart LR
 | 영역 | 선택 |
 | :---- | :---- |
 | 앱 | Flutter (iOS / Android) |
-| 백엔드 | Spring Boot 3 + Kotlin + JPA |
+| 백엔드 | Spring Boot 4 + Kotlin + JPA |
 | DB | PostgreSQL |
 | 인프라 | AWS Lightsail + Docker + GitHub Actions CI/CD |
 | AI (확장) | 백엔드에서 VLM API 호출 — 사진 기반 식재료 인식 |

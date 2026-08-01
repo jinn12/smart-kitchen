@@ -270,7 +270,7 @@ Smart Kitchen Platform의 주요 설계 결정 기록. 각 항목은 `배경 / �
 
 | 영역 | 선택 |
 | :---- | :---- |
-| 백엔드 | Spring Boot 3 + Kotlin + JPA |
+| 백엔드 | Spring Boot 4 + Kotlin + JPA (프로젝트 생성 시점 최신 안정 4.1.0 — 결정 당시 표기는 3이었으나 3.x OSS 지원 종료로 4.x 확정) |
 | DB | PostgreSQL |
 | 앱 | Flutter (Dart) |
 | 인프라 | AWS Lightsail + Docker + GitHub Actions CI/CD |
