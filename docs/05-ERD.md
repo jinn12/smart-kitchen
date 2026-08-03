@@ -1,6 +1,6 @@
 # ERD — Smart Kitchen (가칭)
 
-- 버전: v0.1 (초안) / 작성일: 2026-07-31 / 상태: 검토 중
+- 버전: v1.0 (**확정**) / 작성일: 2026-07-31 / 확정일: 2026-08-03 / 스키마 반영: Flyway `V1__init.sql` (D-016)
 - 기준: PostgreSQL (D-011) / 관련 문서: [도메인 모델 정의서](./04-도메인-모델-정의서.md)
 
 ---
@@ -131,6 +131,7 @@ CREATE TABLE recipe (
     id            BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     household_id  BIGINT NOT NULL REFERENCES household(id),
     name          VARCHAR(50) NOT NULL,
+    servings      INT NOT NULL DEFAULT 1 CHECK (servings > 0),  -- 기준 인분 (D-015)
     created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -148,6 +149,7 @@ CREATE TABLE meal_plan (
     recipe_id     BIGINT NOT NULL REFERENCES recipe(id),
     plan_date     DATE NOT NULL,
     meal_type     VARCHAR(10) NOT NULL CHECK (meal_type IN ('BREAKFAST','LUNCH','DINNER')),  -- D-012
+    servings      INT NOT NULL CHECK (servings > 0),  -- 선택 인분, 기본값은 recipe.servings (D-015)
     status        VARCHAR(10) NOT NULL DEFAULT 'PLANNED' CHECK (status IN ('PLANNED','CONFIRMED','CANCELED')),
     created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
 );
