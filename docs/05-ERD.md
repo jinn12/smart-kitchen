@@ -210,4 +210,4 @@ CREATE INDEX ix_history_lookup ON inventory_history(household_id, ingredient_id,
 | 항목 | 내용 | 확정 시점 |
 | :---- | :---- | :---- |
 | app_user 인증 컬럼 | 소셜 로그인 범위(카카오/구글/애플)에 따라 provider 컬럼 구성 | 개발 단계 |
-| ingredient.category 값 목록 | 마스터 데이터 구축(300~500건) 시 분류 체계 확정 | 마스터 데이터 작성 |
+| ingredient.category 값 목록 | **13종 확정 (D-017, 2026-08-03)** — 채소·과일·정육/가공육/달걀·수산물/건해산·두부/콩/묵·우유/유제품·쌀/잡곡/견과·면/빵/통조림·양념/오일·김치/반찬·냉동/밀키트·커피/차/음료·기타 | V2 시드 반영 |
