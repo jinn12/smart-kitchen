@@ -17,4 +17,8 @@ class AuthController(
     @ResponseStatus(HttpStatus.CREATED)
     fun signup(@RequestBody request: SignupRequest): SignupResponse =
         authService.signup(request)
+
+    @PostMapping("/login")
+    fun login(@RequestBody request: LoginRequest): LoginResponse =
+        authService.login(request)
 }

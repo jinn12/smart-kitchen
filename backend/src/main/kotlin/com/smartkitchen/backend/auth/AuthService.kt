@@ -14,6 +14,7 @@ class AuthService(
     private val userRepository: UserRepository,
     private val householdRepository: HouseholdRepository,
     private val passwordEncoder: PasswordEncoder,
+    private val jwtProvider: JwtProvider,
 ){
     @Transactional
     fun signup(request: SignupRequest): SignupResponse{
@@ -36,11 +37,19 @@ class AuthService(
             email = saved.email,
             nickname = saved.nickname,
         )
-        // 1. 이메일 중복이면 예외:
-        //    throw ResponseStatusException(HttpStatus.CONFLICT, "이미 가입된 이메일입니다")
-        // 2. Household 생성·저장 — 이름은 "${nickname ?: email}의 집" 정도로
-        // 3. AppUser 생성 — passwordHash에는 passwordEncoder.encode(request.password)
-        // 4. userRepository.save(...) 후 SignupResponse로 변환해 반환
+    }
+    @Transactional(readOnly = true)
+    fun login(request: LoginRequest): LoginResponse {
+        val user = userRepository.findByEmail(request.email)
+            ?: throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "이메일 또는 비밀번호가 올바르지 않습니다")
 
+        if (!passwordEncoder.matches(request.password, user.passwordHash)) {
+            throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "이메일 또는 비밀번호가 올바르지 않습니다")
+        }
+
+        return LoginResponse(
+            accessToken = jwtProvider.createToken(user.id!!),
+            nickname = user.nickname,
+        )
     }
 }
