@@ -9,8 +9,8 @@
 
 | ID | Method / Path | 설명 | 상태 |
 | :---- | :---- | :---- | :---- |
-| API-01 | POST /api/auth/signup | 회원가입 + Household 자동 생성 (D-006) | **개발 중** |
-| API-02 | POST /api/auth/login | 로그인, JWT 발급 (D-018) | **개발 중** |
+| API-01 | POST /api/auth/signup | 회원가입 + Household 자동 생성 (D-006) | 완료 (2026-08-19) |
+| API-02 | POST /api/auth/login | 로그인, JWT 발급 (D-018) | 완료 (2026-08-19) |
 | API-10 | GET /api/ingredients | 식재료 검색 (마스터+내 커스텀, keyword·category 필터) | 예정 |
 | API-11 | POST /api/ingredients | 커스텀 식재료 등록 (D-005) | 예정 |
 | API-20 | GET /api/inventories | 재고 목록 (보관 장소 필터, 가용 수량) — S-11 | 예정 |
@@ -63,3 +63,5 @@
 ```
 
 오류: 401 이메일 또는 비밀번호 불일치 (어느 쪽이 틀렸는지는 알려주지 않음 — 보안 관례)
+
+비고: 토큰 유효기간 24시간(로컬 설정값). 짧은 만료 + 리프레시 토큰은 출시 전 재검토.
