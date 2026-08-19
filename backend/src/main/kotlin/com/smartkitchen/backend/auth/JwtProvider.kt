@@ -23,4 +23,14 @@ class JwtProvider(
             .signWith(key)
             .compact()
     }
+    fun parseUserId(token: String): Long? =
+        try {
+            Jwts.parser()
+                .verifyWith(key)
+                .build()
+                .parseSignedClaims(token)
+                .payload.subject.toLong()
+        } catch (e: Exception) {
+            null
+        }
 }

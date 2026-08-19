@@ -7,10 +7,13 @@ import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.web.SecurityFilterChain
+import com.smartkitchen.backend.auth.JwtAuthFilter
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
 
 @Configuration
-class SecurityConfig {
-
+class SecurityConfig (
+    private val jwtAuthFilter: JwtAuthFilter,
+){
     @Bean
     fun passwordEncoder(): PasswordEncoder = BCryptPasswordEncoder()
 
@@ -23,6 +26,7 @@ class SecurityConfig {
                 it.requestMatchers("/api/auth/**", "/error", "/swagger-ui/**", "/v3/api-docs/**").permitAll()  // 가입·로그인, 내부 에러 경로는 토큰 없이 허용
                     .anyRequest().authenticated()                          // 나머지는 전부 인증 필요
             }
+            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter::class.java)
         return http.build()
     }
 }
