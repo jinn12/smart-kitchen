@@ -15,9 +15,10 @@
 | API-11 | POST /api/ingredients | 커스텀 식재료 등록 (D-005) | 완료 (2026-08-20) |
 | API-20 | GET /api/inventories | 재고 목록 (보관 장소 필터, 가용 수량) — S-11 | 완료 (2026-08-20) |
 | API-21 | POST /api/inventories/items | 재고 일괄 등록 (배치 생성) — S-13 | 완료 (2026-08-20) |
-| API-22 | GET /api/inventories/{ingredientId} | 재고 상세 (배치 목록·기록) — S-12 | 예정 |
-| API-23 | PATCH /api/inventories/items/{id} | 배치 수정·소진·폐기 | 예정 |
-| API-24 | GET /api/inventories/expiring | 임박·만료 목록 (D-013) | 예정 |
+| API-22 | GET /api/inventories/{ingredientId} | 재고 상세 (배치 목록·기록) — S-12 | 완료 (2026-08-20) |
+| API-23 | PATCH /api/inventories/items/{id} | 배치 수정·소진·폐기 | 완료 (2026-08-20) |
+| API-24 | GET /api/inventories/expiring | 임박·만료 목록 (D-013) | 완료 (2026-08-20) |
+| API-25 | PATCH /api/inventories/{ingredientId} | 재고 보관 장소 변경 | 완료 (2026-08-20) |
 | API-30 | GET /api/recipes | 요리 목록 — S-21 | 예정 |
 | API-31 | POST /api/recipes | 요리 등록 (재료+기준 인분, D-015) — S-23 | 예정 |
 | API-32 | GET /api/recipes/{id} | 요리 상세 (재료별 가용 여부) — S-22 | 예정 |
@@ -145,3 +146,50 @@
 - 403 — 토큰 없음·만료
 
 비고: 한 항목이라도 실패하면 전체 미저장(원자성).
+
+## API-22. 재고 상세
+
+`GET /api/inventories/{ingredientId}` — 인증 필요
+
+응답 200:
+```json
+{ "summary": { "...": "API-20 항목과 동일" },
+  "batches": [ { "id": 1, "quantity": 300.00, "purchasedAt": "2026-08-20",
+                 "expiryDate": "2026-08-30", "dday": 10 } ],
+  "history": [ { "id": 12, "type": "CONSUME", "quantity": -100.00,
+                 "refType": null, "refId": null, "createdAt": "2026-08-20T00:53:11Z" } ] }
+```
+
+- batches: 잔량 > 0인 배치만 (D-021). FEFO 순 — 유통기한 오름차순, NULL 마지막, 동률은 구매일 (R-2)
+- history: 최근 20건 최신순. quantity는 증감 부호(델타)
+- 404: 재고 없음·없는 재료·타 household 구분 없이 동일 (D-022)
+
+## API-23. 배치 수정·소진·폐기
+
+`PATCH /api/inventories/items/{id}` — 인증 필요
+
+요청: `{ "action": "ADJUST" | "CONSUME" | "DISCARD", "quantity": 100 }`
+
+- ADJUST: 잔량을 quantity로 변경(증가·감소·0 허용, quantity 필수) / CONSUME·DISCARD: 잔량 0 (quantity 불필요)
+- 배치 행은 지우지 않는다 — 이력·FEFO 근거 보존 (D-021). 처리 후 inventory.quantity 재계산
+- 이력: ADJUST→ADJUST / CONSUME→CONSUME / DISCARD→DISPOSE, quantity는 델타
+
+응답 200: 처리 후 재고 요약 (API-20 항목 형태)
+
+오류: 400 quantity 음수·ADJUST에 누락 / 404 없는·타 household 배치 (D-022)
+
+## API-24. 임박·만료 목록
+
+`GET /api/inventories/expiring` — 인증 필요
+
+expiryStatus가 EXPIRED·EXPIRING인 재고만, dday 오름차순(만료가 위), 동률은 재료명. 매일 09:00 요약 푸시(D-013, R-5)의 데이터원.
+
+응답 200: API-20 항목 배열
+
+## API-25. 재고 보관 장소 변경
+
+`PATCH /api/inventories/{ingredientId}` — 인증 필요
+
+요청: `{ "storageLocation": "FREEZER" }` — storage_location은 inventory 행 속성이라 해당 재료의 배치 전체가 함께 이동
+
+응답 200: 변경 후 재고 요약 / 404: 재고 없음·타 household (D-022)
