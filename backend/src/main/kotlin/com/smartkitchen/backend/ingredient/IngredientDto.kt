@@ -1,7 +1,21 @@
 package com.smartkitchen.backend.ingredient
 
 import com.smartkitchen.backend.domain.Ingredient
+import com.smartkitchen.backend.domain.StorageLocation
 import com.smartkitchen.backend.domain.UnitType
+import java.math.BigDecimal
+
+/** 커스텀 식재료 등록 (API-11). nullable 여부는 ERD의 ingredient 컬럼 정의를 따른다 */
+data class IngredientCreateRequest(
+    val name: String,
+    val category: String,
+    val unitType: UnitType,
+    val defaultStorage: StorageLocation,
+    val packageName: String? = null,
+    val packageSize: BigDecimal? = null,
+    val defaultShelfLifeDays: Int? = null,
+    val isTrackable: Boolean = true,
+)
 
 data class IngredientResponse(
     val id: Long,

@@ -28,4 +28,7 @@ interface IngredientRepository : JpaRepository<Ingredient, Long> {
         @Param("keyword") keyword: String?,
         @Param("category") category: String?,
     ): List<Ingredient>
+
+    /** 같은 household 안에서의 커스텀 이름 중복 검사. 마스터와 같은 이름은 허용한다 */
+    fun existsByHouseholdIdAndName(householdId: Long, name: String): Boolean
 }
