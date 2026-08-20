@@ -22,6 +22,8 @@ data class IngredientResponse(
     val name: String,
     val category: String,
     val unitType: UnitType,
+    /** 재고 등록 시 이 값으로 초기화된다 (S-13에서 "냉장에 보관됩니다"로 미리 보여주기 위한 값) */
+    val defaultStorage: StorageLocation,
     val defaultShelfLifeDays: Int?, // 미지정 마스터 항목이 있어 null 허용
     val isTrackable: Boolean,
     val isCustom: Boolean,
@@ -34,6 +36,7 @@ fun Ingredient.toResponse(): IngredientResponse =
         name = name,
         category = category,
         unitType = unitType,
+        defaultStorage = defaultStorage,
         defaultShelfLifeDays = defaultShelfLifeDays,
         isTrackable = isTrackable,
         isCustom = household != null,

@@ -11,6 +11,9 @@ import com.smartkitchen.backend.auth.JwtAuthFilter
 import com.smartkitchen.backend.common.JwtAccessDeniedHandler
 import com.smartkitchen.backend.common.JwtAuthenticationEntryPoint
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
+import org.springframework.web.cors.CorsConfiguration
+import org.springframework.web.cors.CorsConfigurationSource
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 
 @Configuration
 class SecurityConfig (
@@ -22,8 +25,21 @@ class SecurityConfig (
     fun passwordEncoder(): PasswordEncoder = BCryptPasswordEncoder()
 
     @Bean
+    fun corsConfigurationSource(): CorsConfigurationSource {
+        val config = CorsConfiguration().apply {
+            allowedOriginPatterns = listOf("http://localhost:*")  // 로컬 개발용. 배포 시 재검토
+            allowedMethods = listOf("GET", "POST", "PATCH", "DELETE", "OPTIONS")
+            allowedHeaders = listOf("*")
+        }
+        return UrlBasedCorsConfigurationSource().apply {
+            registerCorsConfiguration("/api/**", config)
+        }
+    }
+
+    @Bean
     fun filterChain(http: HttpSecurity): SecurityFilterChain {
         http
+            .cors { }
             .csrf { it.disable() }          // API 서버 + JWT라 세션 CSRF 개념 없음 (D-018)
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
             .authorizeHttpRequests {

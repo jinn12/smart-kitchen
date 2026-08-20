@@ -104,11 +104,12 @@
 응답 200:
 ```json
 [ { "id": 171, "name": "두부(부침용)", "category": "두부/콩/묵",
-    "unitType": "WEIGHT", "defaultShelfLifeDays": 10,
+    "unitType": "WEIGHT", "defaultStorage": "FRIDGE", "defaultShelfLifeDays": 10,
     "isTrackable": true, "isCustom": false } ]
 ```
 
 - isCustom: household_id가 NULL이 아니면 true (D-005)
+- defaultStorage(2026-08-20 추가): 신규 재고 등록 시 초기 보관 장소. S-13에서 "냉장에 보관됩니다 · 유통기한은 구매일+10일" 미리보기 용도 — 이미 재고가 있으면 사용자가 바꾼 보관 장소가 유지되므로(D-025) 실제 결과와 다를 수 있다
 - category 값은 조회에서는 검증하지 않는다(13종 외 값 → 빈 배열). 검증은 등록(API-11)에서 400으로 수행 — "조회는 관대하게, 쓰기는 엄격하게" (D-019와 동일 원칙)
 - 오류: 401 토큰 없음·위조·만료 (공통 오류 응답 참조, D-028)
 
