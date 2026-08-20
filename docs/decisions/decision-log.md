@@ -527,6 +527,21 @@ Smart Kitchen Platform의 주요 설계 결정 기록. 각 항목은 `배경 / �
 
 ---
 
+## D-027. 이력 참조(ref_type) 규약과 배치 확정 규칙 (2026-08-20)
+
+**배경** 배치 작업(R-6) 구현으로 inventory_history의 폴리모픽 참조(ref_type/ref_id)가 처음 사용됨. 값 규약과 확정 차감 규칙 확정 필요.
+
+**결정**
+
+- **ref_type 규약**: CONSUME(확정 차감) → `MEAL_PLAN` + 계획 id / PURCHASE(구매 완료 유래) → `SHOPPING_LIST` + 목록 id / 직접 등록·수정·소진·폐기(API-21·23) → null. "이 변동이 어디서 왔는가"를 이력이 답할 수 있게 한다
+- **확정 차감 규칙**: 차감량 = min(스냅샷 reserved, 현재 실물). reserved는 전액 해제. FEFO 순회, 실제 차감량으로 기록. 계획 단위 트랜잭션 + status 이중 가드로 멱등 (상세는 도메인 정의서 R-6)
+- **InventoryItem에도 @DynamicUpdate**: 확정 배치와 API-23이 같은 배치 행의 quantity를 수정하는 교차 경로가 생겨, D-025에서 Inventory에 적용한 것과 같은 이유로 적용
+- 트랜잭션 프록시 주의: 계획 단위 트랜잭션을 위해 확정 로직(PlanConfirmer)을 루프(ConfirmPlansService)와 **다른 빈**으로 분리 — 같은 클래스 내 자기 호출은 프록시를 타지 않아 @Transactional이 무시되기 때문
+
+**결과** — 백엔드 마지막 핵심 로직 완성. FEFO 차감·멱등성·재고 축소 케이스(min) 실측 검증 완료.
+
+---
+
 ## 미결정 사항
 
 | 항목 | 내용 | 영향 문서 |
