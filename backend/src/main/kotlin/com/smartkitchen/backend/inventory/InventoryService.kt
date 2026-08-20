@@ -26,10 +26,12 @@ class InventoryService(
     private val userRepository: UserRepository,
 ) {
     @Transactional(readOnly = true)
-    fun list(userId: Long, storageLocation: StorageLocation?): List<InventoryResponse> {
-        val household = householdOf(userId)
-        val householdId = household.id!!
+    fun list(userId: Long, storageLocation: StorageLocation?): List<InventoryResponse> =
+        listByHousehold(householdOf(userId).id!!, storageLocation)
 
+    /** 배치 작업처럼 사용자 없이 가구 단위로 도는 경로가 쓴다 (R-6) */
+    @Transactional(readOnly = true)
+    fun listByHousehold(householdId: Long, storageLocation: StorageLocation?): List<InventoryResponse> {
         val inventories = if (storageLocation == null) {
             inventoryRepository.findByHouseholdIdOrderByIngredientNameAsc(householdId)
         } else {
@@ -47,7 +49,12 @@ class InventoryService(
      */
     @Transactional(readOnly = true)
     fun listExpiring(userId: Long): List<InventoryResponse> =
-        list(userId, null)
+        listExpiringByHousehold(householdOf(userId).id!!)
+
+    /** API-24와 임박 요약 배치(R-5, R-6)가 같은 판정을 쓰도록 여기 한 곳에 둔다 */
+    @Transactional(readOnly = true)
+    fun listExpiringByHousehold(householdId: Long): List<InventoryResponse> =
+        listByHousehold(householdId, null)
             .filter { it.expiryStatus == ExpiryStatus.EXPIRED || it.expiryStatus == ExpiryStatus.EXPIRING }
             .sortedWith(compareBy({ it.dday }, { it.name }))
 
@@ -141,9 +148,18 @@ class InventoryService(
         inventoryRepository.findByHouseholdIdAndIngredientId(householdId, ingredientId)
             ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "재고를 찾을 수 없습니다")
 
-    /** 배치 일괄 등록. 한 항목이라도 검증에 걸리면 전체를 저장하지 않는다 */
+    /**
+     * 배치 일괄 등록. 한 항목이라도 검증에 걸리면 전체를 저장하지 않는다.
+     * refType·refId는 이 입고가 어디서 왔는지 남긴다 (D-027).
+     * API-21 직접 등록은 출처가 없어 null, 구매 완료(API-53)는 SHOPPING_LIST를 넘긴다.
+     */
     @Transactional
-    fun addItems(userId: Long, requests: List<InventoryItemCreateRequest>): List<InventoryResponse> {
+    fun addItems(
+        userId: Long,
+        requests: List<InventoryItemCreateRequest>,
+        refType: String? = null,
+        refId: Long? = null,
+    ): List<InventoryResponse> {
         if (requests.isEmpty()) {
             throw ResponseStatusException(HttpStatus.BAD_REQUEST, "등록할 항목이 없습니다")
         }
@@ -203,6 +219,8 @@ class InventoryService(
                     ingredient = ingredient,
                     type = InventoryHistoryType.PURCHASE,
                     quantity = request.quantity,
+                    refType = refType,
+                    refId = refId,
                 )
             )
         }

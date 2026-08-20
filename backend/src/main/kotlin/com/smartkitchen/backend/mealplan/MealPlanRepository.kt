@@ -20,4 +20,7 @@ interface MealPlanRepository : JpaRepository<MealPlan, Long> {
     /** 없는 계획과 남의 household 계획을 같은 null로 만든다 (D-022) */
     @EntityGraph(attributePaths = ["recipe"])
     fun findByIdAndHouseholdId(id: Long, householdId: Long): MealPlan?
+
+    /** 확정 배치 대상 (R-6). ERD의 ix_meal_plan_batch(status, plan_date)를 쓴다 */
+    fun findByStatusAndPlanDateBefore(status: MealPlanStatus, date: LocalDate): List<MealPlan>
 }

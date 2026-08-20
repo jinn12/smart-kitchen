@@ -1,11 +1,16 @@
 package com.smartkitchen.backend.domain
 
 import jakarta.persistence.*
+import org.hibernate.annotations.DynamicUpdate
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.OffsetDateTime
 
-/** 재고 배치 (D-003). FEFO 차감 단위 (R-2) */
+/**
+ * 재고 배치 (D-003). FEFO 차감 단위 (R-2).
+ * 확정 배치(R-6)와 API-23이 같은 행의 quantity를 각각 고치므로 변경된 컬럼만 쓴다.
+ */
+@DynamicUpdate
 @Entity
 @Table(name = "inventory_item")
 class InventoryItem(

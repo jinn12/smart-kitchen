@@ -3,6 +3,7 @@ package com.smartkitchen.backend.shopping
 import com.smartkitchen.backend.auth.UserRepository
 import com.smartkitchen.backend.domain.Household
 import com.smartkitchen.backend.domain.Ingredient
+import com.smartkitchen.backend.domain.InventoryRefType
 import com.smartkitchen.backend.domain.ShoppingItemSource
 import com.smartkitchen.backend.domain.ShoppingList
 import com.smartkitchen.backend.domain.ShoppingListItem
@@ -93,13 +94,16 @@ class ShoppingListService(
             emptyList()
         } else {
             inventoryService.addItems(
-                userId,
-                trackable.map {
+                userId = userId,
+                requests = trackable.map {
                     InventoryItemCreateRequest(
                         ingredientId = it.ingredient.id!!,
                         quantity = it.quantity,
                     )
                 },
+                // 이 입고가 장보기에서 왔음을 이력에 남긴다 (D-027)
+                refType = InventoryRefType.SHOPPING_LIST,
+                refId = list.id!!,
             )
         }
 
