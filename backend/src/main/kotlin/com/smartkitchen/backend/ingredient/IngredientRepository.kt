@@ -31,4 +31,17 @@ interface IngredientRepository : JpaRepository<Ingredient, Long> {
 
     /** 같은 household 안에서의 커스텀 이름 중복 검사. 마스터와 같은 이름은 허용한다 */
     fun existsByHouseholdIdAndName(householdId: Long, name: String): Boolean
+
+    /** 요청자가 쓸 수 있는 식재료(마스터 + 내 커스텀)만 한 번에 조회 (D-006) */
+    @Query(
+        """
+        SELECT i FROM Ingredient i
+        WHERE i.id IN :ids
+          AND (i.household IS NULL OR i.household.id = :householdId)
+        """
+    )
+    fun findAllAccessible(
+        @Param("ids") ids: Collection<Long>,
+        @Param("householdId") householdId: Long,
+    ): List<Ingredient>
 }
