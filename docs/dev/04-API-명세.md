@@ -13,8 +13,8 @@
 | API-02 | POST /api/auth/login | 로그인, JWT 발급 (D-018) | 완료 (2026-08-19) |
 | API-10 | GET /api/ingredients | 식재료 검색 (마스터+내 커스텀, keyword·category 필터) | 완료 (2026-08-20) |
 | API-11 | POST /api/ingredients | 커스텀 식재료 등록 (D-005) | 완료 (2026-08-20) |
-| API-20 | GET /api/inventories | 재고 목록 (보관 장소 필터, 가용 수량) — S-11 | 예정 |
-| API-21 | POST /api/inventories/items | 재고 일괄 등록 (배치 생성) — S-13 | 예정 |
+| API-20 | GET /api/inventories | 재고 목록 (보관 장소 필터, 가용 수량) — S-11 | 완료 (2026-08-20) |
+| API-21 | POST /api/inventories/items | 재고 일괄 등록 (배치 생성) — S-13 | 완료 (2026-08-20) |
 | API-22 | GET /api/inventories/{ingredientId} | 재고 상세 (배치 목록·기록) — S-12 | 예정 |
 | API-23 | PATCH /api/inventories/items/{id} | 배치 수정·소진·폐기 | 예정 |
 | API-24 | GET /api/inventories/expiring | 임박·만료 목록 (D-013) | 예정 |
@@ -104,3 +104,44 @@
 - 403 — 토큰 없음·만료
 
 비고: 마스터와 같은 이름은 허용 — 자기 집 버전을 만들 수 있어야 하므로 (D-005). 중복 기준은 ERD의 부분 유니크 인덱스 ux_ingredient_custom_name과 일치(서비스 검사 + DB 제약 이중 방어).
+
+## API-20. 재고 목록
+
+`GET /api/inventories` — 인증 필요
+
+쿼리 파라미터: `storageLocation`(FRIDGE|FREEZER|PANTRY, 선택). 없으면 전체. ingredient 단위로 배치를 합산, 재료명 오름차순.
+
+응답 200:
+```json
+[ { "ingredientId": 91, "name": "삼겹살", "category": "정육/가공육/달걀",
+    "unitType": "WEIGHT", "storageLocation": "FRIDGE",
+    "totalQuantity": 500.00, "reservedQuantity": 0.00, "availableQuantity": 500.00,
+    "nearestExpiryDate": "2026-08-23", "dday": 3, "expiryStatus": "EXPIRING" } ]
+```
+
+- availableQuantity = totalQuantity − reservedQuantity (R-1). 예약은 API-42에서 발생
+- nearestExpiryDate: 잔량 있는 배치 중 가장 이른 유통기한 (없으면 null)
+- dday: 당일 0, 경과 시 음수. expiryStatus: EXPIRED(dday<0) / EXPIRING(0≤dday≤3, D-020) / NORMAL / NONE
+
+## API-21. 재고 일괄 등록
+
+`POST /api/inventories/items` — 인증 필요
+
+요청(배열):
+```json
+[ { "ingredientId": 171, "quantity": 300 },
+  { "ingredientId": 186, "quantity": 1000, "purchasedAt": "2026-08-18" },
+  { "ingredientId": 91, "quantity": 500, "expiryDate": "2026-08-23" } ]
+```
+
+- purchasedAt 생략 시 오늘. expiryDate 생략 시 purchasedAt + default_shelf_life_days (D-017), 기간 없는 재료는 NULL(FEFO 마지막 순서, R-2)
+- storageLocation은 받지 않는다 — 신규 재고는 ingredient.defaultStorage로 초기화, 기존 재고는 사용자가 바꾼 값 유지
+- 같은 재료 반복 시 배치 다건 생성·수량 합산. 등록 건마다 InventoryHistory(PURCHASE) 기록
+
+응답 201: 영향받은 재고 요약 (API-20 항목과 동일 형태)
+
+오류:
+- 400 — 빈 배열 / quantity ≤ 0 / is_trackable=false 재료 (R-4) / 사용할 수 없는 ingredientId (없는 id·타 household 커스텀을 구분 없이 동일 응답 — 존재 여부 비노출, D-006)
+- 403 — 토큰 없음·만료
+
+비고: 한 항목이라도 실패하면 전체 미저장(원자성).
