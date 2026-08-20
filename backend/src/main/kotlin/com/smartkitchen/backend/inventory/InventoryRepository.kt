@@ -15,6 +15,13 @@ interface InventoryRepository : JpaRepository<Inventory, Long> {
     @EntityGraph(attributePaths = ["ingredient"])
     fun findByHouseholdIdAndIngredientId(householdId: Long, ingredientId: Long): Inventory?
 
+    /** 일괄 등록에서 재료마다 조회하지 않도록 한 번에 읽는다 (N+1 방지) */
+    @EntityGraph(attributePaths = ["ingredient"])
+    fun findByHouseholdIdAndIngredientIdIn(
+        householdId: Long,
+        ingredientIds: Collection<Long>,
+    ): List<Inventory>
+
     /** 보관 장소 필터 없음. 이름 표시에 쓰므로 ingredient를 함께 로드한다 */
     @EntityGraph(attributePaths = ["ingredient"])
     fun findByHouseholdIdOrderByIngredientNameAsc(householdId: Long): List<Inventory>

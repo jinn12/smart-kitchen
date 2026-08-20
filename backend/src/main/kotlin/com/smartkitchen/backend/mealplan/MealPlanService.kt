@@ -8,12 +8,10 @@ import com.smartkitchen.backend.domain.MealPlanItem
 import com.smartkitchen.backend.domain.MealPlanStatus
 import com.smartkitchen.backend.domain.Recipe
 import com.smartkitchen.backend.domain.RecipeIngredient
-import com.smartkitchen.backend.domain.ShoppingItemSource
-import com.smartkitchen.backend.domain.ShoppingList
-import com.smartkitchen.backend.domain.ShoppingListItem
 import com.smartkitchen.backend.inventory.InventoryRepository
 import com.smartkitchen.backend.recipe.RecipeIngredientRepository
 import com.smartkitchen.backend.recipe.RecipeRepository
+import com.smartkitchen.backend.shopping.ShoppingListService
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -26,8 +24,7 @@ import java.time.LocalDate
 class MealPlanService(
     private val mealPlanRepository: MealPlanRepository,
     private val mealPlanItemRepository: MealPlanItemRepository,
-    private val shoppingListRepository: ShoppingListRepository,
-    private val shoppingListItemRepository: ShoppingListItemRepository,
+    private val shoppingListService: ShoppingListService,
     private val recipeRepository: RecipeRepository,
     private val recipeIngredientRepository: RecipeIngredientRepository,
     private val inventoryRepository: InventoryRepository,
@@ -167,9 +164,8 @@ class MealPlanService(
             )
         }
 
-        if (shortages.isNotEmpty()) {
-            addToShoppingList(household, shortages)
-        }
+        // 병합 규칙(D-025)은 장보기 도메인이 소유한다 — 여기서 다시 구현하지 않는다
+        shoppingListService.addShortages(household, shortages)
         return MealPlanDetailResponse(
             id = plan.id!!,
             planDate = plan.planDate,
@@ -265,34 +261,6 @@ class MealPlanService(
 
     private fun shortage(required: BigDecimal, have: BigDecimal): BigDecimal =
         required.subtract(have).max(BigDecimal.ZERO)
-
-    /** 부족분을 장보기에 담는다. 같은 재료가 이미 있으면 수량을 더하고 체크를 푼다 */
-    private fun addToShoppingList(household: Household, shortages: Map<Ingredient, BigDecimal>) {
-        val list = shoppingListRepository.findByHouseholdId(household.id!!)
-            ?: shoppingListRepository.save(ShoppingList(household = household))
-        val existing = shoppingListItemRepository
-            .findByShoppingListIdAndIngredientIdIn(list.id!!, shortages.keys.map { it.id!! })
-            .associateBy { it.ingredient.id!! }
-
-        for ((ingredient, quantity) in shortages) {
-            val item = existing[ingredient.id!!]
-            if (item == null) {
-                shoppingListItemRepository.save(
-                    ShoppingListItem(
-                        shoppingList = list,
-                        ingredient = ingredient,
-                        quantity = quantity,
-                        source = ShoppingItemSource.SHORTAGE,
-                    )
-                )
-            } else {
-                // UNIQUE(list_id, ingredient_id)라 행을 늘릴 수 없다. 합산하고 다시 사야 하므로 체크를 푼다
-                item.quantity = item.quantity.add(quantity)
-                item.isChecked = false
-                item.source = ShoppingItemSource.SHORTAGE
-            }
-        }
-    }
 
     private fun availableByIngredient(householdId: Long): Map<Long, BigDecimal> =
         inventoryRepository.findByHouseholdIdOrderByIngredientNameAsc(householdId)

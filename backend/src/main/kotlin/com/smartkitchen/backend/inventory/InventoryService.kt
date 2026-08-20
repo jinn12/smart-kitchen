@@ -150,6 +150,10 @@ class InventoryService(
         val household = householdOf(userId)
         val ingredients = accessibleIngredients(requests.map { it.ingredientId }, household.id!!)
         val today = LocalDate.now()
+        // 기존 재고를 재료마다 조회하지 않고 한 번에 읽어둔다 (N+1 방지)
+        val existing = inventoryRepository
+            .findByHouseholdIdAndIngredientIdIn(household.id!!, ingredients.keys)
+            .associateBy { it.ingredient.id!! }
         val touched = LinkedHashMap<Long, Inventory>()
 
         for (request in requests) {
@@ -170,7 +174,7 @@ class InventoryService(
             }
 
             val inventory = touched.getOrPut(ingredient.id!!) {
-                inventoryRepository.findByHouseholdIdAndIngredientId(household.id!!, ingredient.id!!)
+                existing[ingredient.id!!]
                     ?: inventoryRepository.save(
                         Inventory(
                             household = household,
