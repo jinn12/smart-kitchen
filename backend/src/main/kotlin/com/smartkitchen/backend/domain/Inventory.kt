@@ -1,8 +1,14 @@
 package com.smartkitchen.backend.domain
 
 import jakarta.persistence.*
+import org.hibernate.annotations.DynamicUpdate
 import java.math.BigDecimal
 
+/**
+ * quantity(재고 API)와 reserved_quantity(계획 API)를 서로 다른 경로가 갱신한다.
+ * 전 컬럼 UPDATE면 한쪽의 낡은 값이 다른 쪽의 갱신을 덮어쓰므로 변경된 컬럼만 쓴다.
+ */
+@DynamicUpdate
 @Entity
 @Table(name = "inventory")
 class Inventory(
