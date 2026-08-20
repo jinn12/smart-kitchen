@@ -28,10 +28,11 @@
 | API-41 | POST /api/meal-plans/preview | 등록 전 부족 재료 미리보기 (D-010) — S-32 | 완료 (2026-08-20) |
 | API-42 | POST /api/meal-plans | 계획 등록 (재고 예약, R-1) | 완료 (2026-08-20) |
 | API-43 | DELETE /api/meal-plans/{id} | 계획 취소 (예약 해제) — S-33 | 완료 (2026-08-20) |
-| API-50 | GET /api/shopping-list | 장보기 목록 — S-41 | 예정 |
-| API-51 | POST /api/shopping-list/items | 항목 추가 (수동) | 예정 |
-| API-52 | PATCH /api/shopping-list/items/{id} | 체크/수량 수정 | 예정 |
-| API-53 | POST /api/shopping-list/complete | 구매 완료 → 배치 생성·재고 반영 — S-42 | 예정 |
+| API-50 | GET /api/shopping-list | 장보기 목록 — S-41 | 완료 (2026-08-20) |
+| API-51 | POST /api/shopping-list/items | 항목 추가 (수동) | 완료 (2026-08-20) |
+| API-52 | PATCH /api/shopping-list/items/{id} | 체크/수량 수정 | 완료 (2026-08-20) |
+| API-53 | POST /api/shopping-list/complete | 구매 완료 → 배치 생성·재고 반영 — S-42 | 완료 (2026-08-20) |
+| API-54 | DELETE /api/shopping-list/items/{id} | 장보기 항목 삭제 | 완료 (2026-08-20) |
 
 ## API-01. 회원가입
 
@@ -292,3 +293,40 @@ expiryStatus가 EXPIRED·EXPIRING인 재고만, dday 오름차순(만료가 위)
 `DELETE /api/meal-plans/{id}` — meal_plan_item 스냅샷만큼 reserved_quantity 원복. status=CANCELED로 두고 행은 보존(D-021 원칙). 404는 D-022
 
 오류 400: 이미 취소·확정된 계획 / 응답 200: `{ id, status, releasedIngredientCount }`
+
+## API-50. 장보기 목록
+
+`GET /api/shopping-list` — household당 1개 목록을 get-or-create (D-009 단일 장바구니)
+
+응답 200: `{ id, items: [ { id, ingredientId, name, unitType, quantity, isChecked, source, packageName, packageSize } ] }`
+
+- 정렬: 미체크 먼저, 그 안에서 재료명 오름차순. packageName·packageSize는 "두부 300g(1모)" 표시용 (D-004)
+
+## API-51. 수동 추가
+
+`POST /api/shopping-list/items` — `{ "ingredientId": ..., "quantity": ... }`
+
+- 같은 재료가 있으면 가산 + 체크 해제, source는 기존 값 유지 (D-025 — 계획 유래 경로와 규칙 공유)
+- is_trackable=false 재료도 담을 수 있다 (D-017: 장보기에는 수동으로만)
+
+오류 400: quantity ≤ 0 / 사용할 수 없는 ingredientId (D-006·D-022) / 응답 200: 갱신된 목록
+
+## API-52. 체크·수량 수정
+
+`PATCH /api/shopping-list/items/{id}` — `{ "isChecked": bool?, "quantity": n? }` 온 필드만 반영
+
+오류 400 quantity ≤ 0 / 404는 D-022 / 응답 200: 해당 항목
+
+## API-53. 구매 완료 → 재고 반영
+
+`POST /api/shopping-list/complete` — 체크된 항목만, 전체 한 트랜잭션 (순환의 마지막 연결)
+
+- 재고 반영은 API-21과 동일 경로(InventoryService 재사용): 구매일=오늘, 유통기한 자동 계산, PURCHASE 이력, 합산
+- is_trackable=false 항목은 재고 반영 없이 목록에서만 제거 (R-4)
+- 반영한 체크 항목은 행 삭제 (D-026 — 구매 이력은 inventory_history가 단일 진실), 미체크는 이월
+
+오류 400: 체크 항목 0개 / 응답 200: `{ inventories: [API-20 항목 형태], carriedOverCount }`
+
+## API-54. 항목 삭제
+
+`DELETE /api/shopping-list/items/{id}` — 물리 삭제 (보존 가치 없음, D-026). 404는 D-022
