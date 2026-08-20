@@ -1,6 +1,6 @@
 # ERD — Smart Kitchen (가칭)
 
-- 버전: v1.0 (**확정**) / 작성일: 2026-07-31 / 확정일: 2026-08-03 / 스키마 반영: Flyway `V1__init.sql` (D-016)
+- 버전: v1.1 / 작성일: 2026-07-31 / v1.0 확정: 2026-08-03 (`V1__init.sql`) / v1.1 증분: 2026-08-20 (`V4__add_recipe_master.sql`, 5절)
 - 기준: PostgreSQL (D-011) / 관련 문서: [도메인 모델 정의서](./04-도메인-모델-정의서.md)
 
 ---
@@ -16,6 +16,9 @@ erDiagram
     inventory ||--o{ inventory_item : ""
     household ||--o{ recipe : ""
     recipe ||--o{ recipe_ingredient : ""
+    recipe_master ||--o{ recipe_master_ingredient : ""
+    recipe_master ||--o{ recipe : "복제 원본"
+    ingredient ||--o{ recipe_master_ingredient : "매핑(NULL 허용)"
     ingredient ||--o{ recipe_ingredient : ""
     household ||--o{ meal_plan : ""
     recipe ||--o{ meal_plan : ""
@@ -204,6 +207,50 @@ CREATE INDEX ix_history_lookup ON inventory_history(household_id, ingredient_id,
 - **storage_location을 inventory에 배치**: 도메인 모델 대비 추가된 컬럼. 보관 장소 필터(S-11)의 기준이며, 등록 시 `ingredient.default_storage`로 초기화하고 사용자가 변경할 수 있게 한다(예: 두부를 냉동 보관).
 - **user_id가 아닌 household_id 스코프**: 모든 도메인 테이블의 FK가 household를 향한다 (D-006). 조회 쿼리는 항상 `household_id =` 조건을 포함한다.
 - **삭제 정책**: 도메인 데이터는 물리 삭제하지 않고 이력(`inventory_history`)으로 추적한다. `recipe_ingredient`, `meal_plan_item`만 부모 삭제 시 CASCADE.
+
+## 5. v1.1 증분 — 요리 마스터 (V4, 2026-08-20)
+
+공공 레시피 DB(COOKRCP01) 적재용. 상세 배경은 [외부 API 검토](./dev/02-외부-API-검토.md), 적재 규칙은 D-023.
+
+```sql
+CREATE TABLE recipe_master (              -- COOKRCP01 적재본 (시스템 소유, household 없음)
+    id              BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    external_seq    VARCHAR(20) NOT NULL UNIQUE,   -- RCP_SEQ, 재적재 시 중복 방지
+    name            VARCHAR(100) NOT NULL,
+    category        VARCHAR(20) NOT NULL,          -- 밥/국&찌개/반찬/일품/후식/기타(원본 빈값)
+    cook_way        VARCHAR(20),
+    weight_1p       NUMERIC(10,2),                 -- 1인분 중량. 이하 _1p는 1인분 기준 (D-015)
+    kcal_1p         NUMERIC(10,2), carb_1p NUMERIC(10,2), protein_1p NUMERIC(10,2),
+    fat_1p          NUMERIC(10,2), natrium_1p NUMERIC(10,2),
+    image_url       VARCHAR(255),
+    raw_parts_text  TEXT NOT NULL,                 -- 재료 원문. 파싱 규칙 개선 시 재파싱용
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX ix_recipe_master_name ON recipe_master(name);
+CREATE INDEX ix_recipe_master_category ON recipe_master(category);
+
+CREATE TABLE recipe_master_ingredient (   -- 재료 자유텍스트 파싱 결과 (배치 선처리)
+    id                     BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    recipe_master_id       BIGINT NOT NULL REFERENCES recipe_master(id) ON DELETE CASCADE,
+    raw_text               VARCHAR(100) NOT NULL,
+    parsed_name            VARCHAR(50) NOT NULL,
+    parsed_qty             NUMERIC(10,2),          -- "약간" 등 수량 불명이면 NULL
+    parsed_unit            VARCHAR(10),
+    matched_ingredient_id  BIGINT REFERENCES ingredient(id),  -- 실패분 NULL → 사용자 검증 (D-007)
+    created_at             TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX ix_recipe_master_ingredient_recipe ON recipe_master_ingredient(recipe_master_id);
+CREATE INDEX ix_recipe_master_ingredient_unmatched ON recipe_master_ingredient(parsed_name)
+    WHERE matched_ingredient_id IS NULL;           -- 재매칭 배치용
+
+ALTER TABLE recipe ADD COLUMN source VARCHAR(10) NOT NULL DEFAULT 'MANUAL'
+    CHECK (source IN ('MANUAL','MASTER'));
+ALTER TABLE recipe ADD COLUMN recipe_master_id BIGINT REFERENCES recipe_master(id);
+ALTER TABLE recipe ADD CONSTRAINT ck_recipe_master_ref
+    CHECK (source = 'MANUAL' OR recipe_master_id IS NOT NULL);
+```
+
+- 시드: V5(1,153건 → V6에서 재료 없는 1건 제거해 1,152건, 재료 12,768행, 매칭 72.3%) — 적재 규칙은 D-023
 
 ## 4. 미정 사항
 
