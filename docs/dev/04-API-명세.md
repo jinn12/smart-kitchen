@@ -11,8 +11,8 @@
 | :---- | :---- | :---- | :---- |
 | API-01 | POST /api/auth/signup | 회원가입 + Household 자동 생성 (D-006) | 완료 (2026-08-19) |
 | API-02 | POST /api/auth/login | 로그인, JWT 발급 (D-018) | 완료 (2026-08-19) |
-| API-10 | GET /api/ingredients | 식재료 검색 (마스터+내 커스텀, keyword·category 필터) | 예정 |
-| API-11 | POST /api/ingredients | 커스텀 식재료 등록 (D-005) | 예정 |
+| API-10 | GET /api/ingredients | 식재료 검색 (마스터+내 커스텀, keyword·category 필터) | 완료 (2026-08-20) |
+| API-11 | POST /api/ingredients | 커스텀 식재료 등록 (D-005) | 완료 (2026-08-20) |
 | API-20 | GET /api/inventories | 재고 목록 (보관 장소 필터, 가용 수량) — S-11 | 예정 |
 | API-21 | POST /api/inventories/items | 재고 일괄 등록 (배치 생성) — S-13 | 예정 |
 | API-22 | GET /api/inventories/{ingredientId} | 재고 상세 (배치 목록·기록) — S-12 | 예정 |
@@ -65,3 +65,42 @@
 오류: 401 이메일 또는 비밀번호 불일치 (어느 쪽이 틀렸는지는 알려주지 않음 — 보안 관례)
 
 비고: 토큰 유효기간 24시간(로컬 설정값). 짧은 만료 + 리프레시 토큰은 출시 전 재검토.
+
+## API-10. 식재료 검색
+
+`GET /api/ingredients` — 인증 필요
+
+쿼리 파라미터: `keyword`(이름 부분일치, 선택), `category`(13종 중 하나, 선택). 둘 다 없으면 전체, 빈 문자열은 미지정과 동일.
+
+검색 범위: 마스터(household_id IS NULL) + 요청자 household의 커스텀만 (D-006). 이름 오름차순.
+
+응답 200:
+```json
+[ { "id": 171, "name": "두부(부침용)", "category": "두부/콩/묵",
+    "unitType": "WEIGHT", "defaultShelfLifeDays": 10,
+    "isTrackable": true, "isCustom": false } ]
+```
+
+- isCustom: household_id가 NULL이 아니면 true (D-005)
+- category 값은 조회에서는 검증하지 않는다(13종 외 값 → 빈 배열). 검증은 등록(API-11)에서 400으로 수행 — "조회는 관대하게, 쓰기는 엄격하게" (D-019와 동일 원칙)
+- 오류: 403 토큰 없음·만료 — 401 통일(AuthenticationEntryPoint)은 전역 예외 처리 정리 시 함께 (추후 과제)
+
+## API-11. 커스텀 식재료 등록
+
+`POST /api/ingredients` — 인증 필요. 요청자의 household 소유로 생성 (D-006)
+
+요청 (필수: name, category, unitType, defaultStorage):
+```json
+{ "name": "할머니표 된장", "category": "양념/오일", "unitType": "WEIGHT",
+  "defaultStorage": "FRIDGE", "packageName": "통", "packageSize": 500,
+  "defaultShelfLifeDays": 365, "isTrackable": true }
+```
+
+응답 201: API-10과 동일한 단건 형태 (isCustom: true)
+
+오류:
+- 400 — name 누락·공백만 / category가 D-017의 13종 외 / isTrackable=false인데 defaultShelfLifeDays 있음 (D-017 시드 규칙) / unitType·defaultStorage 허용값 밖
+- 409 — 같은 household에 동일 name(trim 기준) 커스텀이 이미 존재
+- 403 — 토큰 없음·만료
+
+비고: 마스터와 같은 이름은 허용 — 자기 집 버전을 만들 수 있어야 하므로 (D-005). 중복 기준은 ERD의 부분 유니크 인덱스 ux_ingredient_custom_name과 일치(서비스 검사 + DB 제약 이중 방어).
