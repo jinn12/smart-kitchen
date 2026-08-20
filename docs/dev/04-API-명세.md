@@ -24,10 +24,10 @@
 | API-32 | GET /api/recipes/{id} | 요리 상세 (재료별 가용 여부) — S-22 | 완료 (2026-08-20) |
 | API-33 | GET /api/recipe-masters | 공공 레시피 검색 (페이징) | 완료 (2026-08-20) |
 | API-34 | GET /api/recipe-masters/{id} | 마스터 상세 = 재료 매핑 확인 화면 | 완료 (2026-08-20) |
-| API-40 | GET /api/meal-plans | 주간 식탁 조회 — S-31 | 예정 |
-| API-41 | POST /api/meal-plans/preview | 등록 전 부족 재료 미리보기 (D-010) — S-32 | 예정 |
-| API-42 | POST /api/meal-plans | 계획 등록 (재고 예약, R-1) | 예정 |
-| API-43 | DELETE /api/meal-plans/{id} | 계획 취소 (예약 해제) — S-33 | 예정 |
+| API-40 | GET /api/meal-plans | 주간 식탁 조회 — S-31 | 완료 (2026-08-20) |
+| API-41 | POST /api/meal-plans/preview | 등록 전 부족 재료 미리보기 (D-010) — S-32 | 완료 (2026-08-20) |
+| API-42 | POST /api/meal-plans | 계획 등록 (재고 예약, R-1) | 완료 (2026-08-20) |
+| API-43 | DELETE /api/meal-plans/{id} | 계획 취소 (예약 해제) — S-33 | 완료 (2026-08-20) |
 | API-50 | GET /api/shopping-list | 장보기 목록 — S-41 | 예정 |
 | API-51 | POST /api/shopping-list/items | 항목 추가 (수동) | 예정 |
 | API-52 | PATCH /api/shopping-list/items/{id} | 체크/수량 수정 | 예정 |
@@ -248,3 +248,47 @@ expiryStatus가 EXPIRED·EXPIRING인 재고만, dday 오름차순(만료가 위)
 `GET /api/recipes/{id}` — 404는 D-022
 
 응답 200: 기본 정보 + cookableNow + ingredients: `[ { ingredientId, name, quantity, unitType, availableQuantity, sufficient } ]` — sufficient는 is_trackable=false면 null(판단 제외)
+
+## API-41. 계획 등록 전 미리보기
+
+`POST /api/meal-plans/preview` — 조회 전용, 아무것도 변경하지 않음 (S-32, D-010)
+
+요청: `{ "recipeId": 5, "servings": 2 }` — servings 생략 시 recipe.servings
+
+응답 200: 요약(shortageCount) + ingredients: `[ { ingredientId, name, unitType, requiredQuantity, availableQuantity, shortageQuantity, trackable } ]`
+
+- requiredQuantity = recipe_ingredient.quantity × (servings ÷ recipe.servings), 소수 2자리 (D-015)
+- trackable=false 재료는 계량 제외 표시 — shortage 0, shortageCount에 불포함 (R-4)
+
+## API-42. 계획 등록 (재고 예약)
+
+`POST /api/meal-plans`
+
+요청: `{ recipeId, planDate, mealType, servings, addToShoppingIngredientIds: [...] }`
+
+- 재료별 예약량 = **min(필요량, 등록 시점 가용량)** — "있는 만큼 사용"이 기본 (D-010, R-1)
+- 예약량은 meal_plan_item에 **스냅샷 저장**, 취소는 이 값으로 원복(재계산 금지)
+- addToShoppingIngredientIds에 포함된 재료의 부족량만 장보기에 담는다 — 병합 규칙은 D-025
+- inventory 행을 ingredient.id 오름차순 PESSIMISTIC_WRITE 잠금 후 갱신 (D-025)
+- status=PLANNED 생성. 날짜 경과 후 확정(FEFO 차감)은 배치 작업(R-6) 회차
+
+오류 400: 과거 planDate / servings < 1 / 사용할 수 없는 recipeId(D-022) / 잘못된 mealType / 재료 없는 요리
+
+응답 201: 계획 상세 (재료별 required·reserved·shortage·addedToShoppingList)
+
+## API-40. 주간 식탁
+
+`GET /api/meal-plans?from=&to=` — from 기본 오늘, to 기본 from+6일
+
+응답 200: `[ { date, meals: [ { id, mealType, recipeName, servings, status } ] } ]`
+
+- 기간 내 모든 날짜 반환(계획 없는 날은 빈 배열). CANCELED 제외 (D-025)
+- 끼니 순 정렬은 enum 선언 순 — meal_type이 문자열 컬럼이라 DB 정렬은 알파벳순이므로 서버가 정렬
+
+오류 400: from > to / 기간 31일 초과
+
+## API-43. 계획 취소
+
+`DELETE /api/meal-plans/{id}` — meal_plan_item 스냅샷만큼 reserved_quantity 원복. status=CANCELED로 두고 행은 보존(D-021 원칙). 404는 D-022
+
+오류 400: 이미 취소·확정된 계획 / 응답 200: `{ id, status, releasedIngredientCount }`
