@@ -1,6 +1,6 @@
 {
-    "name": "app",
-    "short_name": "app",
+    "name": "smart_kitchen",
+    "short_name": "smart_kitchen",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

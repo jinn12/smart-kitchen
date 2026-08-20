@@ -1,4 +1,4 @@
-# app
+# smart_kitchen
 
 A new Flutter project.
 

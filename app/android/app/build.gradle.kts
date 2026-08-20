@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.smartkitchen.app"
+    namespace = "com.smartkitchen.smart_kitchen"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -16,7 +16,7 @@ android {
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.smartkitchen.app"
+        applicationId = "com.smartkitchen.smart_kitchen"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
