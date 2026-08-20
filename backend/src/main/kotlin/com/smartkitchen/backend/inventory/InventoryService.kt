@@ -41,6 +41,106 @@ class InventoryService(
         return toResponses(inventories)
     }
 
+    /**
+     * 임박·만료 재고만 (D-013). 만료가 맨 위로 오도록 dday 오름차순.
+     * 매일 09:00 요약 푸시(R-5)의 데이터원이 될 예정이다.
+     */
+    @Transactional(readOnly = true)
+    fun listExpiring(userId: Long): List<InventoryResponse> =
+        list(userId, null)
+            .filter { it.expiryStatus == ExpiryStatus.EXPIRED || it.expiryStatus == ExpiryStatus.EXPIRING }
+            .sortedWith(compareBy({ it.dday }, { it.name }))
+
+    /** 재고 상세 (S-12). 배치는 FEFO 순, 이력은 최신 20건 */
+    @Transactional(readOnly = true)
+    fun detail(userId: Long, ingredientId: Long): InventoryDetailResponse {
+        val household = householdOf(userId)
+        val inventory = findInventory(household.id!!, ingredientId)
+        val today = LocalDate.now()
+
+        val batches = inventoryItemRepository.findActiveBatches(inventory.id!!).map {
+            InventoryBatchResponse(
+                id = it.id!!,
+                quantity = it.quantity,
+                purchasedAt = it.purchasedAt,
+                expiryDate = it.expiryDate,
+                dday = it.expiryDate?.let { date -> ddayOf(date, today) },
+            )
+        }
+        val history = inventoryHistoryRepository
+            .findTop20ByHouseholdIdAndIngredientIdOrderByCreatedAtDescIdDesc(household.id!!, ingredientId)
+            .map {
+                InventoryHistoryResponse(
+                    id = it.id!!,
+                    type = it.type,
+                    quantity = it.quantity,
+                    refType = it.refType,
+                    refId = it.refId,
+                    createdAt = it.createdAt,
+                )
+            }
+
+        return InventoryDetailResponse(
+            summary = toResponses(listOf(inventory)).first(),
+            batches = batches,
+            history = history,
+        )
+    }
+
+    /** 배치 단위 수정·소진·폐기. 처리 후 inventory.quantity를 배치 합계로 재계산한다 */
+    @Transactional
+    fun updateItem(userId: Long, itemId: Long, request: InventoryItemUpdateRequest): InventoryResponse {
+        val household = householdOf(userId)
+        val batch = inventoryItemRepository.findAccessible(itemId, household.id!!)
+            ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "배치를 찾을 수 없습니다")
+
+        val before = batch.quantity
+        val after = when (request.action) {
+            InventoryItemAction.ADJUST -> {
+                val quantity = request.quantity
+                    ?: throw ResponseStatusException(HttpStatus.BAD_REQUEST, "ADJUST는 quantity가 필요합니다")
+                if (quantity < BigDecimal.ZERO) {
+                    throw ResponseStatusException(HttpStatus.BAD_REQUEST, "수량은 0 이상이어야 합니다")
+                }
+                quantity
+            }
+            // 소진·폐기는 배치를 통째로 비운다. 행은 남겨 구매 이력을 보존한다 (R-2)
+            InventoryItemAction.CONSUME, InventoryItemAction.DISCARD -> BigDecimal.ZERO
+        }
+
+        batch.quantity = after
+        val inventory = batch.inventory
+        inventory.quantity = inventoryItemRepository.sumQuantity(inventory.id!!)
+
+        inventoryHistoryRepository.save(
+            InventoryHistory(
+                household = household,
+                ingredient = inventory.ingredient,
+                type = when (request.action) {
+                    InventoryItemAction.ADJUST -> InventoryHistoryType.ADJUST
+                    InventoryItemAction.CONSUME -> InventoryHistoryType.CONSUME
+                    InventoryItemAction.DISCARD -> InventoryHistoryType.DISPOSE
+                },
+                quantity = after.subtract(before),
+            )
+        )
+        return toResponses(listOf(inventory)).first()
+    }
+
+    /** 보관 장소 변경 (API-25). Inventory 단위이므로 해당 재료의 배치 전체가 함께 옮겨진다 */
+    @Transactional
+    fun updateInventory(userId: Long, ingredientId: Long, request: InventoryUpdateRequest): InventoryResponse {
+        val household = householdOf(userId)
+        val inventory = findInventory(household.id!!, ingredientId)
+        inventory.storageLocation = request.storageLocation
+        return toResponses(listOf(inventory)).first()
+    }
+
+    /** 없는 재료와 남의 household 재고를 구분하지 않고 같은 404로 묶는다 (D-006) */
+    private fun findInventory(householdId: Long, ingredientId: Long): Inventory =
+        inventoryRepository.findByHouseholdIdAndIngredientId(householdId, ingredientId)
+            ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "재고를 찾을 수 없습니다")
+
     /** 배치 일괄 등록. 한 항목이라도 검증에 걸리면 전체를 저장하지 않는다 */
     @Transactional
     fun addItems(userId: Long, requests: List<InventoryItemCreateRequest>): List<InventoryResponse> {
@@ -138,7 +238,7 @@ class InventoryService(
 
         return inventories.map { inventory ->
             val expiryDate = nearestExpiry[inventory.id!!]
-            val dday = expiryDate?.let { ChronoUnit.DAYS.between(today, it).toInt() }
+            val dday = expiryDate?.let { ddayOf(it, today) }
 
             InventoryResponse(
                 ingredientId = inventory.ingredient.id!!,
@@ -156,6 +256,9 @@ class InventoryService(
             )
         }
     }
+
+    private fun ddayOf(expiryDate: LocalDate, today: LocalDate): Int =
+        ChronoUnit.DAYS.between(today, expiryDate).toInt()
 
     /** 당일(D-0)은 임박으로 본다. 만료는 하루 지난 시점부터 (R-5 보완) */
     private fun statusOf(dday: Int?): ExpiryStatus = when {

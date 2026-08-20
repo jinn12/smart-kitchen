@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository
 interface InventoryRepository : JpaRepository<Inventory, Long> {
 
     /** 재료당 1행 (ERD의 UNIQUE(household_id, ingredient_id)) */
+    @EntityGraph(attributePaths = ["ingredient"])
     fun findByHouseholdIdAndIngredientId(householdId: Long, ingredientId: Long): Inventory?
 
     /** 보관 장소 필터 없음. 이름 표시에 쓰므로 ingredient를 함께 로드한다 */
