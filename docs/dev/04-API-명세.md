@@ -19,9 +19,11 @@
 | API-23 | PATCH /api/inventories/items/{id} | 배치 수정·소진·폐기 | 완료 (2026-08-20) |
 | API-24 | GET /api/inventories/expiring | 임박·만료 목록 (D-013) | 완료 (2026-08-20) |
 | API-25 | PATCH /api/inventories/{ingredientId} | 재고 보관 장소 변경 | 완료 (2026-08-20) |
-| API-30 | GET /api/recipes | 요리 목록 — S-21 | 예정 |
-| API-31 | POST /api/recipes | 요리 등록 (재료+기준 인분, D-015) — S-23 | 예정 |
-| API-32 | GET /api/recipes/{id} | 요리 상세 (재료별 가용 여부) — S-22 | 예정 |
+| API-30 | GET /api/recipes | 요리 목록 — S-21 | 완료 (2026-08-20) |
+| API-31 | POST /api/recipes | 요리 등록 (재료+기준 인분, D-015) — S-23 | 완료 (2026-08-20) |
+| API-32 | GET /api/recipes/{id} | 요리 상세 (재료별 가용 여부) — S-22 | 완료 (2026-08-20) |
+| API-33 | GET /api/recipe-masters | 공공 레시피 검색 (페이징) | 완료 (2026-08-20) |
+| API-34 | GET /api/recipe-masters/{id} | 마스터 상세 = 재료 매핑 확인 화면 | 완료 (2026-08-20) |
 | API-40 | GET /api/meal-plans | 주간 식탁 조회 — S-31 | 예정 |
 | API-41 | POST /api/meal-plans/preview | 등록 전 부족 재료 미리보기 (D-010) — S-32 | 예정 |
 | API-42 | POST /api/meal-plans | 계획 등록 (재고 예약, R-1) | 예정 |
@@ -193,3 +195,56 @@ expiryStatus가 EXPIRED·EXPIRING인 재고만, dday 오름차순(만료가 위)
 요청: `{ "storageLocation": "FREEZER" }` — storage_location은 inventory 행 속성이라 해당 재료의 배치 전체가 함께 이동
 
 응답 200: 변경 후 재고 요약 / 404: 재고 없음·타 household (D-022)
+
+## API-33. 공공 레시피 검색
+
+`GET /api/recipe-masters` — 인증 필요, household 스코프 없음(전원 공통 데이터)
+
+쿼리: `keyword`(이름 부분일치) / `category`(밥·국&찌개·반찬·일품·후식·기타) / `page`(0부터, 기본 0) / `size`(기본 20, 1~100 절삭)
+
+응답 200:
+```json
+{ "totalCount": 1152, "page": 0, "size": 20,
+  "items": [ { "id": 7, "name": "된장국", "category": "국&찌개",
+               "cookWay": "끓이기", "imageUrl": "...", "kcal1p": 55.0 } ] }
+```
+
+오류: 400 page < 0
+
+## API-34. 마스터 상세 (재료 매핑 확인 화면)
+
+`GET /api/recipe-masters/{id}` — 인증 필요
+
+응답 200: 기본 정보 + servings(항상 1, D-015) + ingredients:
+```json
+[ { "rawText": "두부 20g(2×2×2cm)", "parsedName": "두부", "parsedQty": 20.0,
+    "parsedUnit": "g", "matchedIngredient": null } ]
+```
+
+- matchedIngredient가 null인 항목이 사용자 지정 대상 (D-007 자동 확정 금지)
+- 404: D-022
+
+## API-30. 내 요리 목록
+
+`GET /api/recipes` — household 스코프, 이름 오름차순
+
+응답 200: `[ { id, name, servings, source, ingredientCount, cookableNow } ]`
+
+- cookableNow: 모든 재료의 가용 수량 ≥ **레시피 기준 분량**(quantity 그대로, D-024). is_trackable=false 재료는 판단 제외 (R-4)
+
+## API-31. 내 요리 등록
+
+`POST /api/recipes` — 인증 필요
+
+- MANUAL: `{ "source":"MANUAL", "name":..., "servings":n, "ingredients":[{ingredientId,quantity}] }`
+- MASTER 복제: `{ "source":"MASTER", "recipeMasterId":..., "servings":n, "ingredients":[...] }` — name은 마스터에서 복사, servings 생략 시 1(D-015). ingredients는 매핑 확인 화면에서 사용자가 확정한 최종 목록
+
+오류 400: name 누락·공백(MANUAL) / ingredients 빈 배열 / quantity ≤ 0 / servings < 1 / 같은 ingredientId 중복 / 사용할 수 없는 ingredientId (D-006·D-022) / MASTER인데 recipeMasterId 누락·미존재
+
+응답 201: API-32와 동일한 상세
+
+## API-32. 내 요리 상세
+
+`GET /api/recipes/{id}` — 404는 D-022
+
+응답 200: 기본 정보 + cookableNow + ingredients: `[ { ingredientId, name, quantity, unitType, availableQuantity, sufficient } ]` — sufficient는 is_trackable=false면 null(판단 제외)
