@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/api_exception.dart';
+import '../auth/auth_state.dart';
+import '../ingredient/ingredient_models.dart';
 import 'expiry_badge.dart';
+import 'inventory_add_screen.dart';
 import 'inventory_api.dart';
 import 'inventory_detail_screen.dart';
-import 'inventory_add_screen.dart';
 import 'inventory_models.dart';
 
 /// S-11 재고 목록. 냉장고 탭의 시작 화면.
@@ -12,10 +14,10 @@ class InventoryListScreen extends StatefulWidget {
   const InventoryListScreen({super.key});
 
   @override
-  State<InventoryListScreen> createState() => _InventoryListScreenState();
+  State<InventoryListScreen> createState() => InventoryListScreenState();
 }
 
-class _InventoryListScreenState extends State<InventoryListScreen> {
+class InventoryListScreenState extends State<InventoryListScreen> {
   StorageLocation? _filter;
   bool _loading = true;
   String? _error;
@@ -26,6 +28,11 @@ class _InventoryListScreenState extends State<InventoryListScreen> {
   void initState() {
     super.initState();
     _load();
+  }
+
+  /// 탭으로 돌아올 때마다 셸이 부른다 — 계획 예약·구매 완료가 가용 수량에 바로 보이도록
+  void reload() {
+    if (!_loading) _load();
   }
 
   Future<void> _load() async {
@@ -84,6 +91,12 @@ class _InventoryListScreenState extends State<InventoryListScreen> {
             onPressed: _loading ? null : _load,
             icon: const Icon(Icons.refresh),
             tooltip: '새로고침',
+          ),
+          // 설정 화면(S-51)이 생기면 그쪽으로 옮긴다 — 지금은 시작 탭에 임시로 둔다
+          IconButton(
+            tooltip: '로그아웃',
+            icon: const Icon(Icons.logout),
+            onPressed: () => context.read<AuthState>().logout(),
           ),
         ],
       ),

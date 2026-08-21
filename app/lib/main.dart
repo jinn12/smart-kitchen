@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'core/api_client.dart';
 import 'core/token_storage.dart';
 import 'features/auth/auth_api.dart';
 import 'features/auth/auth_state.dart';
 import 'features/auth/login_screen.dart';
+import 'features/ingredient/ingredient_api.dart';
 import 'features/inventory/inventory_api.dart';
+import 'features/mealplan/meal_plan_api.dart';
+import 'features/recipe/recipe_api.dart';
+import 'features/shopping/shopping_api.dart';
 import 'features/shell/main_shell.dart';
 
 void main() {
@@ -23,7 +28,11 @@ void main() {
         Provider<TokenStorage>.value(value: tokenStorage),
         Provider<ApiClient>.value(value: apiClient),
         Provider<AuthApi>.value(value: authApi),
+        Provider<IngredientApi>(create: (_) => IngredientApi(apiClient)),
         Provider<InventoryApi>(create: (_) => InventoryApi(apiClient)),
+        Provider<RecipeApi>(create: (_) => RecipeApi(apiClient)),
+        Provider<MealPlanApi>(create: (_) => MealPlanApi(apiClient)),
+        Provider<ShoppingApi>(create: (_) => ShoppingApi(apiClient)),
         ChangeNotifierProvider<AuthState>.value(value: authState..restore()),
       ],
       child: const SmartKitchenApp(),
@@ -39,6 +48,10 @@ class SmartKitchenApp extends StatelessWidget {
     return MaterialApp(
       title: 'Smart Kitchen',
       theme: ThemeData(colorSchemeSeed: Colors.green, useMaterial3: true),
+      // 달력(S-32 날짜 선택)이 한국어로 나오도록. 앱은 한국어 전용이다
+      locale: const Locale('ko'),
+      localizationsDelegates: GlobalMaterialLocalizations.delegates,
+      supportedLocales: const [Locale('ko'), Locale('en')],
       home: const _Root(),
     );
   }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/api_exception.dart';
+import '../ingredient/ingredient_models.dart';
 import 'expiry_badge.dart';
 import 'inventory_api.dart';
 import 'inventory_models.dart';

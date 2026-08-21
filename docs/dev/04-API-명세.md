@@ -266,6 +266,8 @@ expiryStatus가 EXPIRED·EXPIRING인 재고만, dday 오름차순(만료가 위)
 
 오류 400: name 누락·공백(MANUAL) / ingredients 빈 배열 / quantity ≤ 0 / servings < 1 / 같은 ingredientId 중복 / 사용할 수 없는 ingredientId (D-006·D-022) / MASTER인데 recipeMasterId 누락·미존재
 
+비고: "같은 ingredientId 중복 400"은 마스터 복제에서 실제로 발생한다(예: "표고버섯 20g"과 "표고버섯 기둥"이 같은 재료로 매핑). 앱(매핑 확인 화면)이 저장 전에 선제 안내·차단한다 (D-030).
+
 응답 201: API-32와 동일한 상세
 
 ## API-32. 내 요리 상세

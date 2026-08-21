@@ -1,5 +1,6 @@
 import '../../core/api_client.dart';
 import '../../core/api_exception.dart';
+import '../ingredient/ingredient_models.dart';
 import 'inventory_models.dart';
 
 class InventoryApi {
@@ -63,21 +64,5 @@ class InventoryApi {
       await _client.dio.patch('/inventories/$ingredientId',
           data: {'storageLocation': storage.code});
     }, fallback: '보관 장소를 바꾸지 못했습니다');
-  }
-
-  /// API-10. S-13의 재료 검색
-  Future<List<IngredientSearchResult>> searchIngredients({
-    String? keyword,
-    String? category,
-  }) {
-    return callApi(() async {
-      final res = await _client.dio.get('/ingredients', queryParameters: {
-        if (keyword != null && keyword.isNotEmpty) 'keyword': keyword,
-        if (category != null && category.isNotEmpty) 'category': category,
-      });
-      return (res.data as List<dynamic>)
-          .map((e) => IngredientSearchResult.fromJson(e as Map<String, dynamic>))
-          .toList();
-    }, fallback: '식재료를 불러오지 못했습니다');
   }
 }

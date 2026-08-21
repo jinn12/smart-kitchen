@@ -17,8 +17,13 @@ class ApiException implements Exception {
     if (data is Map && data['message'] is String) {
       return ApiException(data['message'] as String, status: e.response?.statusCode);
     }
-    if (e.type == DioExceptionType.connectionError ||
-        e.type == DioExceptionType.connectionTimeout) {
+    // 시간 초과는 "연결 불가"와 다르다 — 서버는 살아있는데 느린 상황이라 재시도가 통한다.
+    if (e.type == DioExceptionType.connectionTimeout ||
+        e.type == DioExceptionType.receiveTimeout ||
+        e.type == DioExceptionType.sendTimeout) {
+      return ApiException('서버 응답이 지연되고 있습니다. 잠시 후 다시 시도해주세요');
+    }
+    if (e.type == DioExceptionType.connectionError) {
       return ApiException('서버에 연결할 수 없습니다');
     }
     return ApiException(fallback, status: e.response?.statusCode);

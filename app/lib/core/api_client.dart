@@ -3,7 +3,13 @@ import 'token_storage.dart';
 
 class ApiClient {
   ApiClient(this._tokenStorage) {
-    dio = Dio(BaseOptions(baseUrl: 'http://localhost:8080/api'));
+    dio = Dio(BaseOptions(
+      baseUrl: 'http://localhost:8080/api',
+      // 서버가 죽었거나 네트워크가 막히면 무한 대기 대신 5초 만에 끊는다.
+      connectTimeout: const Duration(seconds: 5),
+      // 응답은 넉넉히 준다 — 레시피 검색(API-33)처럼 1,100여 건을 훑는 조회가 있다.
+      receiveTimeout: const Duration(seconds: 15),
+    ));
     dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) async {
         final token = await _tokenStorage.read();
