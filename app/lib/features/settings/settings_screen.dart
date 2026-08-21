@@ -13,7 +13,7 @@ class SettingsScreen extends StatelessWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('로그아웃'),
-        content: const Text('로그아웃할까요?\n다시 이용하려면 로그인해야 합니다.'),
+        content: const Text('로그아웃할까요?\n다시 이용하려면 로그인해야 해요.'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('닫기')),
           FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('로그아웃')),

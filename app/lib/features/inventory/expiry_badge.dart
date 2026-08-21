@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/app_theme.dart';
 import 'inventory_models.dart';
 
 /// D-배지 (R-5, D-020).
@@ -12,8 +13,8 @@ class ExpiryBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (label, color) = switch (status) {
-      ExpiryStatus.expired => ('만료', Colors.red),
-      ExpiryStatus.expiring => ('D-${dday ?? 0}', Colors.orange),
+      ExpiryStatus.expired => ('만료', StatusColors.expired),
+      ExpiryStatus.expiring => ('D-${dday ?? 0}', StatusColors.expiring),
       ExpiryStatus.normal => (dday != null ? 'D-$dday' : '-', Colors.grey),
       ExpiryStatus.none => ('유통기한 없음', Colors.grey),
     };

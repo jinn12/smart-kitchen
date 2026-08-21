@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/api_exception.dart';
+import '../../core/app_theme.dart';
 import '../../core/date_utils.dart';
 import '../ingredient/ingredient_models.dart' show formatQuantity;
 import 'meal_plan_api.dart';
@@ -98,8 +99,8 @@ class _MealPlanPreviewScreenState extends State<MealPlanPreviewScreen> {
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: short > 0
-                  ? Theme.of(context).colorScheme.errorContainer.withValues(alpha: 0.5)
-                  : Colors.green.withValues(alpha: 0.1),
+                  ? StatusColors.expired.withValues(alpha: 0.08)
+                  : StatusColors.secured.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Row(
@@ -140,11 +141,11 @@ class _MealPlanPreviewScreenState extends State<MealPlanPreviewScreen> {
       return ListTile(
         title: Text(item.name),
         subtitle: Text('$need · 가용 ${formatQuantity(item.availableQuantity)}$unit'),
-        trailing: const Icon(Icons.check, color: Colors.green, size: 20),
+        trailing: const Icon(Icons.check, color: StatusColors.secured, size: 20),
       );
     }
 
-    final error = Theme.of(context).colorScheme.error;
+    const error = StatusColors.expired;
     final checked = _toShopping.contains(item.ingredientId);
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),

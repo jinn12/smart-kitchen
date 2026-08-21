@@ -38,7 +38,7 @@ class RecipeAddScreen extends StatelessWidget {
           _ChoiceCard(
             icon: Icons.edit_outlined,
             title: '직접 입력',
-            description: '이름과 인분을 정하고 재료를 하나씩 담습니다.',
+            description: '이름과 인분을 정하고 재료를 하나씩 담아요.',
             onTap: () => _go(context, const RecipeManualAddScreen()),
           ),
         ],

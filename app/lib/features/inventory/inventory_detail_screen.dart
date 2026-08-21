@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/api_exception.dart';
+import '../../core/app_theme.dart';
 import '../ingredient/ingredient_models.dart';
 import 'expiry_badge.dart';
 import 'inventory_api.dart';
@@ -68,14 +69,14 @@ class _InventoryDetailScreenState extends State<InventoryDetailScreen> {
       if (quantity == null) return;
     } else {
       final label = action == 'CONSUME' ? '소진' : '폐기';
-      final ok = await _confirm('$label 처리', '이 배치를 $label 처리할까요? 잔량이 0이 됩니다.');
+      final ok = await _confirm('$label 처리', '이 배치를 $label 처리할까요? 잔량이 0이 돼요.');
       if (ok != true) return;
     }
     try {
       await api.updateBatch(batch.id, action, quantity: quantity);
       _changed = true;
       if (!mounted) return;
-      _toast('처리했습니다');
+      _toast('처리했어요');
       _load();
     } on ApiException catch (e) {
       if (!mounted) return;
@@ -93,7 +94,7 @@ class _InventoryDetailScreenState extends State<InventoryDetailScreen> {
           controller: controller,
           autofocus: true,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          decoration: const InputDecoration(labelText: '잔량', helperText: '0도 입력할 수 있습니다'),
+          decoration: const InputDecoration(labelText: '잔량', helperText: '0도 입력할 수 있어요'),
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('취소')),
@@ -135,7 +136,7 @@ class _InventoryDetailScreenState extends State<InventoryDetailScreen> {
             .map((s) => ListTile(
                   title: Text(s.label),
                   trailing: s == current
-                      ? const Icon(Icons.check, color: Colors.green)
+                      ? Icon(Icons.check, color: Theme.of(ctx).colorScheme.primary)
                       : null,
                   onTap: () => Navigator.pop(ctx, s),
                 ))
@@ -147,7 +148,7 @@ class _InventoryDetailScreenState extends State<InventoryDetailScreen> {
       await api.changeStorage(widget.ingredientId, picked);
       _changed = true;
       if (!mounted) return;
-      _toast('${picked.label}으로 옮겼습니다');
+      _toast('${picked.label}으로 옮겼어요');
       _load();
     } on ApiException catch (e) {
       if (!mounted) return;
@@ -234,7 +235,7 @@ class _InventoryDetailScreenState extends State<InventoryDetailScreen> {
         if (d.batches.isEmpty)
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Text('남은 배치가 없습니다.'),
+            child: Text('남은 배치가 없어요.'),
           )
         else
           ...d.batches.map((b) => _buildBatchTile(b, unit)),
@@ -243,14 +244,14 @@ class _InventoryDetailScreenState extends State<InventoryDetailScreen> {
         if (d.history.isEmpty)
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Text('기록이 없습니다.'),
+            child: Text('아직 기록이 없어요.'),
           )
         else
           ...d.history.map((h) => ListTile(
                 dense: true,
                 leading: Icon(
                   h.quantity.toDouble() >= 0 ? Icons.add_circle_outline : Icons.remove_circle_outline,
-                  color: h.quantity.toDouble() >= 0 ? Colors.green : Colors.redAccent,
+                  color: h.quantity.toDouble() >= 0 ? StatusColors.secured : StatusColors.expired,
                   size: 20,
                 ),
                 title: Text('${h.typeLabel} ${formatQuantity(h.quantity)}$unit'),

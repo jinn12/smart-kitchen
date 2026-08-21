@@ -83,13 +83,14 @@ class _SignupScreenState extends State<SignupScreen> {
             TextField(
               controller: _nickname,
               decoration: const InputDecoration(
-                  labelText: '닉네임 (선택)', helperText: '내 냉장고 이름에 쓰입니다'),
+                  labelText: '닉네임 (선택)', helperText: '내 냉장고 이름에 쓰여요'),
             ),
             const SizedBox(height: 24),
             if (_error != null)
               Padding(
                 padding: const EdgeInsets.only(bottom: 12),
-                child: Text(_error!, style: const TextStyle(color: Colors.red)),
+                child: Text(_error!,
+                    style: TextStyle(color: Theme.of(context).colorScheme.error)),
               ),
             FilledButton(
               onPressed: _loading ? null : _signup,

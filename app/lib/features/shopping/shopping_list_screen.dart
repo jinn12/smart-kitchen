@@ -106,7 +106,7 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
     try {
       await context.read<ShoppingApi>().deleteItem(item.id);
       if (!mounted) return false;
-      _toast('${item.name}을(를) 삭제했습니다');
+      _toast('${item.name}을(를) 삭제했어요');
       return true;
     } on ApiException catch (e) {
       if (!mounted) return false;
@@ -125,7 +125,7 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
       unitLabel: ingredient.unitLabel,
       hint: ingredient.isTrackable
           ? null
-          : '잔량 관리를 하지 않는 재료라 구매 완료 시 재고에는 등록되지 않고 목록에서만 빠집니다 (R-4)',
+          : '잔량 관리를 하지 않는 재료라 구매 완료 시 재고에는 등록되지 않고 목록에서만 빠져요 (R-4)',
       confirmLabel: '담기',
     );
     if (quantity == null || !mounted) return;
@@ -135,7 +135,7 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
           .addItem(ingredientId: ingredient.id, quantity: quantity);
       if (!mounted) return;
       setState(() => _items = list.items);
-      _toast('${ingredient.name}을(를) 담았습니다');
+      _toast('${ingredient.name}을(를) 담았어요');
     } on ApiException catch (e) {
       if (!mounted) return;
       _toast(e.message);
@@ -149,8 +149,8 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('구매 완료'),
-        content: Text('체크한 $count건이 재고에 등록됩니다.\n'
-            '구매일은 오늘로, 유통기한은 재료별 기본값으로 계산됩니다.'),
+        content: Text('체크한 $count건을 재고에 등록할게요.\n'
+            '구매일은 오늘로, 유통기한은 재료별 기본값으로 계산돼요.'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('닫기')),
           FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('구매 완료')),
@@ -178,7 +178,7 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
     return showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('재고에 반영했습니다'),
+        title: const Text('재고에 반영했어요'),
         content: SizedBox(
           width: 320,
           child: Column(
@@ -186,7 +186,7 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               if (result.inventories.isEmpty)
-                const Text('재고로 관리하는 항목이 없어 목록에서만 정리했습니다.')
+                const Text('재고로 관리하는 항목이 없어 목록에서만 정리했어요.')
               else
                 ConstrainedBox(
                   // 다이얼로그 안이라 높이가 무한대다 — 목록에 상한을 직접 준다
@@ -322,31 +322,35 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
       confirmDismiss: (_) => _delete(item),
       onDismissed: (_) =>
           setState(() => _items = _items.where((i) => i.id != item.id).toList()),
-      child: ListTile(
-        leading: Checkbox(
-          value: item.isChecked,
-          onChanged: (_) => _toggle(item),
-        ),
-        title: Text(
-          item.name,
-          style: TextStyle(
-            decoration: item.isChecked ? TextDecoration.lineThrough : null,
-            color: item.isChecked ? Colors.grey : null,
+      // 담은 항목은 취소선 대신 배경 tint와 옅은 글자로 구분한다.
+      // 취소선은 "지웠다/틀렸다"로 읽히는데, 여기서는 장바구니에 담긴 상태다
+      child: Container(
+        color: item.isChecked
+            ? Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.6)
+            : null,
+        child: Opacity(
+          opacity: item.isChecked ? 0.6 : 1,
+          child: ListTile(
+            leading: Checkbox(
+              value: item.isChecked,
+              onChanged: (_) => _toggle(item),
+            ),
+            title: Text(item.name),
+            subtitle: Row(
+              children: [
+                Text(item.quantityLabel),
+                const SizedBox(width: 6),
+                _SourceChip(source: item.source),
+              ],
+            ),
+            trailing: IconButton(
+              icon: const Icon(Icons.edit_outlined, size: 20),
+              tooltip: '수량 수정',
+              onPressed: () => _editQuantity(item),
+            ),
+            onTap: () => _toggle(item),
           ),
         ),
-        subtitle: Row(
-          children: [
-            Text(item.quantityLabel),
-            const SizedBox(width: 6),
-            _SourceChip(source: item.source),
-          ],
-        ),
-        trailing: IconButton(
-          icon: const Icon(Icons.edit_outlined, size: 20),
-          tooltip: '수량 수정',
-          onPressed: () => _editQuantity(item),
-        ),
-        onTap: () => _toggle(item),
       ),
     );
   }

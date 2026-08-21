@@ -6,7 +6,9 @@ plugins {
 
 android {
     namespace = "com.smartkitchen.smart_kitchen"
-    compileSdk = flutter.compileSdkVersion
+    // flutter.compileSdkVersion(36)로는 빌드가 깨진다 —
+    // flutter_secure_storage 11.x가 SDK 37 이상으로 컴파일된 것을 요구한다 (하위 호환)
+    compileSdk = 37
     ndkVersion = flutter.ndkVersion
 
     compileOptions {

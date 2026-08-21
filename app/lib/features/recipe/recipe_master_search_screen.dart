@@ -197,7 +197,7 @@ class _RecipeMasterSearchScreenState extends State<RecipeMasterSearchScreen> {
       );
     }
     if (_items.isEmpty) {
-      return const Center(child: Text('검색 결과가 없습니다.'));
+      return const Center(child: Text('검색 결과가 없어요.'));
     }
 
     return Column(
@@ -244,7 +244,7 @@ class _RecipeMasterSearchScreenState extends State<RecipeMasterSearchScreen> {
     if (!_hasMore) {
       return const Padding(
         padding: EdgeInsets.symmetric(vertical: 16),
-        child: Center(child: Text('마지막입니다', style: TextStyle(color: Colors.grey))),
+        child: Center(child: Text('여기까지예요', style: TextStyle(color: Colors.grey))),
       );
     }
     return Padding(

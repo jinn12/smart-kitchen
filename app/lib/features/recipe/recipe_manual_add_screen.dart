@@ -42,7 +42,7 @@ class _RecipeManualAddScreenState extends State<RecipeManualAddScreen> {
   Future<void> _pick(IngredientSearchResult ingredient) async {
     // 같은 재료를 두 번 넣으면 서버가 400으로 막는다 (API-31)
     if (_picked.any((p) => p.ingredient.id == ingredient.id)) {
-      _toast('이미 담은 재료입니다');
+      _toast('이미 담은 재료예요');
       return;
     }
     final quantity = await askQuantity(
@@ -51,7 +51,7 @@ class _RecipeManualAddScreenState extends State<RecipeManualAddScreen> {
       unitLabel: ingredient.unitLabel,
       hint: ingredient.isTrackable
           ? null
-          : '잔량 관리를 하지 않는 재료라 부족 판정에서는 빠집니다 (R-4)',
+          : '잔량 관리를 하지 않는 재료라 부족 판정에서는 빠져요 (R-4)',
       confirmLabel: '담기',
     );
     if (quantity == null) return;
@@ -72,11 +72,11 @@ class _RecipeManualAddScreenState extends State<RecipeManualAddScreen> {
   Future<void> _save() async {
     final name = _name.text.trim();
     if (name.isEmpty) {
-      _toast('요리 이름을 입력해주세요');
+      _toast('요리 이름을 입력해 주세요');
       return;
     }
     if (_picked.isEmpty) {
-      _toast('재료를 한 개 이상 담아주세요');
+      _toast('재료를 한 개 이상 담아 주세요');
       return;
     }
     setState(() => _saving = true);

@@ -33,11 +33,11 @@ class _InventoryAddScreenState extends State<InventoryAddScreen> {
   Future<void> _pick(IngredientSearchResult ingredient) async {
     // 잔량 관리를 하지 않는 재료는 재고로 담을 수 없다 (R-4) — 서버도 400으로 막는다
     if (!ingredient.isTrackable) {
-      _toast('${ingredient.name}은(는) 잔량 관리를 하지 않는 재료라 재고에 담을 수 없습니다');
+      _toast('${ingredient.name}은(는) 잔량 관리를 하지 않는 재료라 재고에 담을 수 없어요');
       return;
     }
     if (_picked.any((p) => p.ingredient.id == ingredient.id)) {
-      _toast('이미 담은 재료입니다');
+      _toast('이미 담은 재료예요');
       return;
     }
     final quantity = await _askQuantity(ingredient);
@@ -54,8 +54,8 @@ class _InventoryAddScreenState extends State<InventoryAddScreen> {
       initial: initial,
       // 등록 시 서버가 채우는 기본값을 미리 보여준다 (IA의 "기본값 확인")
       hint: shelf != null
-          ? '${ingredient.defaultStorage.label}에 보관됩니다 · 유통기한은 구매일+$shelf일'
-          : '${ingredient.defaultStorage.label}에 보관됩니다 · 권장 소비 기간이 없어 유통기한 없이 등록됩니다',
+          ? '${ingredient.defaultStorage.label}에 보관돼요 · 유통기한은 구매일+$shelf일'
+          : '${ingredient.defaultStorage.label}에 보관돼요 · 권장 소비 기간이 없어 유통기한 없이 등록돼요',
       confirmLabel: '담기',
     );
   }

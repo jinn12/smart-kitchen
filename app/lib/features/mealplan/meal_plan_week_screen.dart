@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/api_exception.dart';
+import '../../core/app_theme.dart';
 import '../../core/date_utils.dart';
 import '../../core/empty_state.dart';
 import 'meal_plan_add_flow.dart';
@@ -85,8 +86,8 @@ class MealPlanWeekScreenState extends State<MealPlanWeekScreen> {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       duration: const Duration(seconds: 4),
       content: Text(
-        '재고가 예약되었습니다 · 냉장고 탭의 가용 재고에 반영됨'
-        '${shopping > 0 ? ' · 장보기에 $shopping건 담김' : ''}',
+        '재고를 예약해 뒀어요 · 냉장고의 가용 수량에 반영됐어요'
+        '${shopping > 0 ? ' · 장보기에 $shopping건 담았어요' : ''}',
       ),
     ));
   }
@@ -96,7 +97,7 @@ class MealPlanWeekScreenState extends State<MealPlanWeekScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('계획 취소'),
-        content: Text('${meal.recipeName} 계획을 취소할까요?\n예약해 둔 재고가 다시 가용으로 돌아갑니다.'),
+        content: Text('${meal.recipeName} 계획을 취소할까요?\n예약해 둔 재고가 다시 가용으로 돌아가요.'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('닫기')),
           FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('계획 취소')),
@@ -108,7 +109,7 @@ class MealPlanWeekScreenState extends State<MealPlanWeekScreen> {
       final result = await context.read<MealPlanApi>().cancel(meal.id);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('계획을 취소했습니다 · 재료 ${result.releasedIngredientCount}개의 예약을 풀었습니다'),
+        content: Text('계획을 취소했어요 · 재료 ${result.releasedIngredientCount}개의 예약을 풀었어요'),
       ));
       _load();
     } on ApiException catch (e) {
@@ -224,7 +225,7 @@ class MealPlanWeekScreenState extends State<MealPlanWeekScreen> {
               Text(
                 formatDayLabel(day.date),
                 style: TextStyle(
-                  fontWeight: isToday ? FontWeight.bold : FontWeight.w500,
+                  fontWeight: isToday ? FontWeight.bold : FontWeight.w600,
                   // 계획 없는 날은 옅게 — 있는 날에 눈이 먼저 가도록
                   color: empty ? Colors.grey : null,
                 ),
@@ -299,8 +300,8 @@ class _StatusChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = switch (status) {
-      MealPlanStatus.confirmed => Colors.green,
-      MealPlanStatus.planned => Colors.blueGrey,
+      MealPlanStatus.confirmed => StatusColors.secured,
+      MealPlanStatus.planned => Theme.of(context).colorScheme.primary,
       MealPlanStatus.canceled => Colors.grey,
     };
     return Container(

@@ -14,6 +14,7 @@ application-local.yml
 .flutter-plugins-dependencies
 local.properties
 key.properties
+app/android/.kotlin/
 
 # etc
 *.log

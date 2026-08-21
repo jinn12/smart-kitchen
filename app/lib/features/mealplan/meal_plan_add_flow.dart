@@ -89,7 +89,7 @@ class _MealPlanRecipePickScreenState extends State<MealPlanRecipePickScreen> {
       return const Center(
         child: Padding(
           padding: EdgeInsets.all(24),
-          child: Text('등록된 요리가 없습니다.\n요리 탭에서 먼저 요리를 등록해 주세요.',
+          child: Text('등록된 요리가 없어요.\n요리 탭에서 먼저 요리를 등록해 주세요.',
               textAlign: TextAlign.center),
         ),
       );

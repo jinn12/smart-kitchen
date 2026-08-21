@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/api_exception.dart';
+import '../../core/app_theme.dart';
 import '../ingredient/ingredient_models.dart' show formatQuantity;
 import '../ingredient/ingredient_picker.dart';
 import 'recipe_api.dart';
@@ -92,7 +93,7 @@ class _RecipeMappingScreenState extends State<RecipeMappingScreen> {
   Future<void> _save() async {
     final items = toRequestItems(_rows);
     if (items.isEmpty) {
-      _toast('재료를 한 개 이상 포함해주세요');
+      _toast('재료를 한 개 이상 포함해 주세요');
       return;
     }
     final duplicated = duplicatedIngredientIds(_rows);
@@ -102,7 +103,7 @@ class _RecipeMappingScreenState extends State<RecipeMappingScreen> {
           .map((r) => r.ingredientName!)
           .toSet()
           .join(', ');
-      _toast('같은 재료가 두 번 포함됐습니다 ($names). 한 줄만 남기고 수량을 합쳐주세요');
+      _toast('같은 재료가 두 번 포함됐어요 ($names). 한 줄만 남기고 수량을 합쳐 주세요');
       return;
     }
     if (_attentionCount > 0 && !await _confirmSkip()) return;
@@ -131,7 +132,7 @@ class _RecipeMappingScreenState extends State<RecipeMappingScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('지정하지 않은 재료가 있어요'),
-        content: Text('재료를 지정하지 않은 $_attentionCount건은 이 요리에서 제외됩니다. 계속할까요?'),
+        content: Text('재료를 지정하지 않은 $_attentionCount건은 이 요리에서 제외돼요. 계속할까요?'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('돌아가기')),
           FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('계속')),
@@ -304,7 +305,7 @@ class _RecipeMappingScreenState extends State<RecipeMappingScreen> {
                         : Icons.remove_circle_outline,
                 size: 18,
                 color: row.included
-                    ? Colors.green
+                    ? StatusColors.secured
                     : row.needsAttention
                         ? scheme.error
                         : Colors.grey,

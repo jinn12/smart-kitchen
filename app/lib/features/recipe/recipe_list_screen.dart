@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/api_exception.dart';
+import '../../core/app_theme.dart';
 import '../../core/empty_state.dart';
 import 'recipe_add_screen.dart';
 import 'recipe_api.dart';
@@ -72,7 +73,7 @@ class RecipeListScreenState extends State<RecipeListScreen> {
     await _load();
     if (!mounted) return;
     ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text('${created.name}을(를) 등록했습니다')));
+        .showSnackBar(SnackBar(content: Text('${created.name}을(를) 등록했어요')));
   }
 
   @override
@@ -197,13 +198,13 @@ class CookableBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: Colors.green.withValues(alpha: 0.15),
+        color: StatusColors.secured.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(4),
       ),
       child: const Text(
         '지금 가능',
         style: TextStyle(
-          color: Colors.green,
+          color: StatusColors.secured,
           fontSize: 11,
           fontWeight: FontWeight.bold,
         ),

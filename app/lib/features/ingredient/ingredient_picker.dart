@@ -153,7 +153,7 @@ class _IngredientSearchPanelState extends State<IngredientSearchPanel> {
       );
     }
     if (_results.isEmpty) {
-      return const Center(child: Text('검색 결과가 없습니다.'));
+      return const Center(child: Text('검색 결과가 없어요.'));
     }
     return ListView.builder(
       itemCount: _results.length,
@@ -169,7 +169,7 @@ class _IngredientSearchPanelState extends State<IngredientSearchPanel> {
             '${r.isTrackable ? '' : ' · 잔량 관리 안 함'}',
           ),
           trailing: picked
-              ? const Icon(Icons.check_circle, color: Colors.green)
+              ? Icon(Icons.check_circle, color: Theme.of(context).colorScheme.primary)
               : const Icon(Icons.add_circle_outline),
           enabled: selectable,
           onTap: () => widget.onSelect(r),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/api_exception.dart';
+import '../../core/app_theme.dart';
 import '../ingredient/ingredient_models.dart' show formatQuantity;
 import 'recipe_api.dart';
 import 'recipe_list_screen.dart' show CookableBadge;
@@ -137,7 +138,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     }
 
     final short = item.sufficient == false;
-    final color = short ? Theme.of(context).colorScheme.error : null;
+    final color = short ? StatusColors.expired : null;
     return ListTile(
       title: Text(
         item.name,
@@ -152,7 +153,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
               '${formatQuantity(item.quantity - item.availableQuantity)}$unit 부족',
               style: TextStyle(color: color, fontWeight: FontWeight.bold),
             )
-          : const Icon(Icons.check, color: Colors.green, size: 20),
+          : const Icon(Icons.check, color: StatusColors.secured, size: 20),
     );
   }
 }

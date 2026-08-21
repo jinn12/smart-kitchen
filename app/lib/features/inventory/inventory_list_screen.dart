@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/api_exception.dart';
+import '../../core/app_theme.dart';
 import '../../core/empty_state.dart';
 import '../ingredient/ingredient_models.dart';
 import '../settings/settings_screen.dart';
@@ -164,7 +165,7 @@ class InventoryListScreenState extends State<InventoryListScreen> {
   Widget _buildExpiringSection() {
     return Card(
       margin: const EdgeInsets.fromLTRB(12, 12, 12, 4),
-      color: Colors.orange.withValues(alpha: 0.06),
+      color: StatusColors.expiring.withValues(alpha: 0.06),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -172,9 +173,9 @@ class InventoryListScreenState extends State<InventoryListScreen> {
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
             child: Row(
               children: [
-                const Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 20),
+                const Icon(Icons.warning_amber_rounded, color: StatusColors.expiring, size: 20),
                 const SizedBox(width: 8),
-                Text('임박·만료 ${_expiring.length}건',
+                Text('유통기한을 확인해 주세요 · ${_expiring.length}건',
                     style: const TextStyle(fontWeight: FontWeight.bold)),
               ],
             ),

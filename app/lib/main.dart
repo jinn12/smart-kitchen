@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'core/api_client.dart';
+import 'core/app_theme.dart';
 import 'core/token_storage.dart';
 import 'features/auth/auth_api.dart';
 import 'features/auth/auth_state.dart';
@@ -52,7 +53,7 @@ class SmartKitchenApp extends StatelessWidget {
       // 로그아웃이나 401 만료 뒤에도 이전 화면이 그대로 보인다.
       key: ValueKey(loggedIn),
       title: 'Smart Kitchen',
-      theme: ThemeData(colorSchemeSeed: Colors.green, useMaterial3: true),
+      theme: buildAppTheme(),
       // 달력(S-32 날짜 선택)이 한국어로 나오도록. 앱은 한국어 전용이다
       locale: const Locale('ko'),
       localizationsDelegates: GlobalMaterialLocalizations.delegates,
