@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/api_exception.dart';
+import '../../core/empty_state.dart';
 import 'recipe_add_screen.dart';
 import 'recipe_api.dart';
 import 'recipe_detail_screen.dart';
@@ -114,24 +115,13 @@ class RecipeListScreenState extends State<RecipeListScreen> {
       return RefreshIndicator(
         onRefresh: _load,
         child: ListView(
-          children: const [
-            SizedBox(height: 120),
-            Center(
-              child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 24),
-                child: Column(
-                  children: [
-                    Icon(Icons.restaurant_outlined, size: 48, color: Colors.grey),
-                    SizedBox(height: 12),
-                    Text('요리를 등록해보세요'),
-                    SizedBox(height: 4),
-                    Text(
-                      '레시피에서 찾거나 직접 입력할 수 있어요.',
-                      style: TextStyle(color: Colors.grey),
-                    ),
-                  ],
-                ),
-              ),
+          children: [
+            EmptyState(
+              icon: Icons.restaurant_outlined,
+              title: '우리집 메뉴판을 만들어보세요',
+              description: '공공 레시피에서 찾거나 직접 입력할 수 있어요.\n등록해 두면 식단 계획에서 바로 고를 수 있어요.',
+              actionLabel: '요리 등록하기',
+              onAction: _openAdd,
             ),
           ],
         ),

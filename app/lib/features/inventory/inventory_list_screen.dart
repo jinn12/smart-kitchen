@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/api_exception.dart';
-import '../auth/auth_state.dart';
+import '../../core/empty_state.dart';
 import '../ingredient/ingredient_models.dart';
+import '../settings/settings_screen.dart';
 import 'expiry_badge.dart';
 import 'inventory_add_screen.dart';
 import 'inventory_api.dart';
@@ -92,11 +93,13 @@ class InventoryListScreenState extends State<InventoryListScreen> {
             icon: const Icon(Icons.refresh),
             tooltip: '새로고침',
           ),
-          // 설정 화면(S-51)이 생기면 그쪽으로 옮긴다 — 지금은 시작 탭에 임시로 둔다
+          // 설정·계정은 탭이 아니라 상단 아이콘으로 들어간다 (D-012)
           IconButton(
-            tooltip: '로그아웃',
-            icon: const Icon(Icons.logout),
-            onPressed: () => context.read<AuthState>().logout(),
+            tooltip: '설정',
+            icon: const Icon(Icons.settings_outlined),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const SettingsScreen()),
+            ),
           ),
         ],
       ),
@@ -131,10 +134,25 @@ class InventoryListScreenState extends State<InventoryListScreen> {
           if (_expiring.isNotEmpty) _buildExpiringSection(),
           _buildFilterBar(),
           if (_items.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 48),
-              child: Center(child: Text('재고가 없습니다. 오른쪽 아래에서 등록해 보세요.')),
-            )
+            // 필터 때문에 비어 보이는 것과 정말 재고가 없는 것은 다른 상황이다
+            _filter != null
+                ? EmptyState(
+                    icon: Icons.filter_alt_off_outlined,
+                    title: '${_filter!.label}에 둔 재료가 없어요',
+                    description: '다른 보관 장소를 보거나 전체로 바꿔보세요.',
+                    actionLabel: '전체 보기',
+                    onAction: () {
+                      setState(() => _filter = null);
+                      _load();
+                    },
+                  )
+                : EmptyState(
+                    icon: Icons.kitchen_outlined,
+                    title: '장 봐온 재료를 등록해보세요',
+                    description: '재료를 넣어두면 요리·식단·장보기가 자동으로 이어져요.',
+                    actionLabel: '재료 등록하기',
+                    onAction: _openAdd,
+                  )
           else
             ..._items.map(_buildTile),
           const SizedBox(height: 80), // FAB에 가리지 않도록

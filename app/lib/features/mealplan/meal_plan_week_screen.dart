@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/api_exception.dart';
 import '../../core/date_utils.dart';
+import '../../core/empty_state.dart';
 import 'meal_plan_add_flow.dart';
 import 'meal_plan_api.dart';
 import 'meal_plan_models.dart';
@@ -185,11 +186,25 @@ class MealPlanWeekScreenState extends State<MealPlanWeekScreen> {
         ),
       );
     }
+    // 이 주에 계획이 하나도 없으면 "계획 없음" 일곱 줄 대신 다음 행동을 안내한다
+    final isEmptyWeek = _days.every((d) => d.meals.isEmpty);
     return RefreshIndicator(
       onRefresh: _load,
       child: ListView(
         padding: const EdgeInsets.only(bottom: 88), // FAB에 가리지 않도록
-        children: _days.map(_buildDay).toList(),
+        children: isEmptyWeek
+            ? [
+                EmptyState(
+                  icon: Icons.calendar_month_outlined,
+                  title: _weekOffset == 0
+                      ? '이번 주 식단을 짜볼까요?'
+                      : '이 주에는 세워둔 계획이 없어요',
+                  description: '요리를 고르고 날짜만 정하면, 부족한 재료를 미리 알려드려요.',
+                  actionLabel: '계획 등록하기',
+                  onAction: _openAdd,
+                ),
+              ]
+            : _days.map(_buildDay).toList(),
       ),
     );
   }

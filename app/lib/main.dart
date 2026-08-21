@@ -45,7 +45,12 @@ class SmartKitchenApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final loggedIn = context.select<AuthState, bool>((a) => a.loggedIn);
     return MaterialApp(
+      // 로그인 상태가 바뀌면 네비게이터를 통째로 새로 만든다.
+      // home만 갈아끼우면 그 위에 쌓여 있던 화면(설정·상세 등)이 남아,
+      // 로그아웃이나 401 만료 뒤에도 이전 화면이 그대로 보인다.
+      key: ValueKey(loggedIn),
       title: 'Smart Kitchen',
       theme: ThemeData(colorSchemeSeed: Colors.green, useMaterial3: true),
       // 달력(S-32 날짜 선택)이 한국어로 나오도록. 앱은 한국어 전용이다

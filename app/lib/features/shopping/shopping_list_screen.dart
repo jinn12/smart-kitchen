@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/api_exception.dart';
+import '../../core/empty_state.dart';
 import '../ingredient/ingredient_models.dart';
 import '../ingredient/ingredient_picker.dart';
 import 'shopping_api.dart';
@@ -265,19 +266,13 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
       return RefreshIndicator(
         onRefresh: _load,
         child: ListView(
-          children: const [
-            SizedBox(height: 120),
-            Center(
-              child: Column(
-                children: [
-                  Icon(Icons.shopping_cart_outlined, size: 48, color: Colors.grey),
-                  SizedBox(height: 12),
-                  Text('장바구니가 비어 있어요'),
-                  SizedBox(height: 4),
-                  Text('식탁에서 계획을 세우면 부족분이 여기로 담깁니다.',
-                      style: TextStyle(color: Colors.grey)),
-                ],
-              ),
+          children: [
+            EmptyState(
+              icon: Icons.shopping_cart_outlined,
+              title: '장바구니가 비어 있어요',
+              description: '식탁에서 계획을 세우면 부족한 재료가 여기로 담겨요.\n지금 살 것이 있다면 직접 추가해도 돼요.',
+              actionLabel: '직접 추가하기',
+              onAction: _addManually,
             ),
           ],
         ),

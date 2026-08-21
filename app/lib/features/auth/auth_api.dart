@@ -14,8 +14,11 @@ class AuthApi {
       final res = await _client.dio.post('/auth/login',
           data: {'email': email, 'password': password});
       final token = res.data['accessToken'] as String;
+      final nickname = res.data['nickname'] as String?;
       await _tokenStorage.save(token);
-      return res.data['nickname'] as String? ?? email;
+      // 설정 화면에서 쓸 계정 정보. 서버에 조회 API가 없어 이때 받은 값을 남겨둔다
+      await _tokenStorage.saveAccount(email: email, nickname: nickname);
+      return nickname ?? email;
     }, fallback: '로그인에 실패했습니다');
   }
 

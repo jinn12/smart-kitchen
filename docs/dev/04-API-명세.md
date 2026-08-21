@@ -34,6 +34,7 @@
 | :---- | :---- | :---- | :---- |
 | API-01 | POST /api/auth/signup | 회원가입 + Household 자동 생성 (D-006) | 완료 (2026-08-19) |
 | API-02 | POST /api/auth/login | 로그인, JWT 발급 (D-018) | 완료 (2026-08-19) |
+| API-03 | GET /api/me | 내 정보 조회 (이메일·닉네임) — 앱 계정 표시의 진실원 (현재는 로그인 시점 로컬 캐시) | 예정 |
 | API-10 | GET /api/ingredients | 식재료 검색 (마스터+내 커스텀, keyword·category 필터) | 완료 (2026-08-20) |
 | API-11 | POST /api/ingredients | 커스텀 식재료 등록 (D-005) | 완료 (2026-08-20) |
 | API-20 | GET /api/inventories | 재고 목록 (보관 장소 필터, 가용 수량) — S-11 | 완료 (2026-08-20) |
